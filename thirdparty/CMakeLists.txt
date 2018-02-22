@@ -1,0 +1,4 @@
+
+ADD_SUBDIRECTORY("googletest")
+SET(GTEST_INCLUDE_DIRS "${gtest_SOURCE_DIR}/include" PARENT_SCOPE)
+

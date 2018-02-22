@@ -1,0 +1,29 @@
+
+FILE(GLOB KOTIPP_TEST_SRC "*.c" "*.cpp")
+FILE(GLOB KOTIPP_TEST_HDR "*.h" "*.hpp")
+
+ADD_EXECUTABLE(kotipp_lib_test ${KOTIPP_TEST_HDR} ${KOTIPP_TEST_SRC} )
+
+TARGET_LINK_LIBRARIES(kotipp_lib_test
+	${Boost_LIBRARIES}
+	${ZLIB_LIBRARIES}
+	${BZIP2_LIBRARIES}
+	gtest_main
+)
+
+TARGET_INCLUDE_DIRECTORIES(kotipp_lib_test
+	INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	$<INSTALL_INTERFACE:include/kotipp>
+)
+
+INSTALL(TARGETS
+	kotipp_lib_test
+	DESTINATION
+	bin
+	EXPORT
+	kotipp
+)
+
+GTEST_ADD_TESTS(kotipp_lib_test "" ${KOTIPP_TEST_SRC})
+
