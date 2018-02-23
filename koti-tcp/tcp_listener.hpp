@@ -235,7 +235,7 @@ template <
 	class connection_handler = null_connection_handler,
 	class listener_handler = null_listener_handler,
 	class connection = connection<connection_handler>,
-	class TimeSource = std::chrono::steady_clock,
+	class time_source = std::chrono::steady_clock,
 	class listener_options = listener_options
 >
 class listener
@@ -243,7 +243,7 @@ class listener
 	, virtual public listener_logs
 	, public listener_handler
 	, public listener_options
-	, private kotipp::timestamp<TimeSource>
+	, private kotipp::timestamp<time_source>
 	, private tcp::acceptor
 {
 public:
@@ -254,13 +254,12 @@ public:
 	using acceptor_type = tcp::acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
 	using logs_type = listener_logs;
-	using connection_handler_type = connection_handler;
 	using listener_handler_type = listener_handler;
 	using connection_type = connection;
 
 	using error_handler_result = typename listener_handler_type::error_handler_result;
 
-	using time_source = TimeSource;
+	using time_source_type = time_source;
 	using time_point = typename time_source::time_point;
 	using time_duration = typename time_point::duration;
 
@@ -579,14 +578,14 @@ public:
 		}
 
 		// Specifically: update timestamp upon _exit_ of on_accept()
-		kotipp::timestamp<TimeSource>::stamp_now();
+		kotipp::timestamp<time_source>::stamp_now();
 		socket_ = tcp::socket(ios_);
 		do_accept();
 	}
 	catch (...)
 	{
 		// Specifically: update timestamp upon _exit_ of on_accept()
-		kotipp::timestamp<TimeSource>::stamp_now();
+		kotipp::timestamp<time_source>::stamp_now();
 		throw;
 	}
 
@@ -605,13 +604,13 @@ public:
 	time_point
 	last_accept_time() const
 	{
-		return kotipp::timestamp<TimeSource>::previous();
+		return kotipp::timestamp<time_source>::previous();
 	}
 
 	time_duration
 	connection_time() const
 	{
-		return kotipp::timestamp<TimeSource>::duration_since_stamp();
+		return kotipp::timestamp<time_source>::duration_since_stamp();
 	}
 
 protected:
@@ -629,7 +628,7 @@ protected:
 		, logs_type()
 		, listener_handler()
 		, listener_options()
-		, kotipp::timestamp<TimeSource>()
+		, kotipp::timestamp<time_source>()
 		, acceptor_type(ios)
 		, ios_(ios)
 		, socket_(ios)
@@ -645,7 +644,7 @@ protected:
 		, logs_type()
 		, listener_handler()
 		, listener_options()
-		, kotipp::timestamp<TimeSource>()
+		, kotipp::timestamp<time_source>()
 		, acceptor_type(ios)
 		, ios_(ios)
 		, socket_(ios)

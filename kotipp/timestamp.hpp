@@ -5,13 +5,13 @@
 namespace kotipp {
 
 template <
-	class TimeSource = std::chrono::steady_clock
+	class time_source = std::chrono::steady_clock
 >
 class timestamp
-	: private TimeSource
+	: private time_source
 {
 public:
-	using time_source = TimeSource;
+	using time_source_type = time_source;
 	using time_point = typename time_source::time_point;
 	using time_duration = typename time_point::duration;
 
@@ -53,12 +53,12 @@ public:
 
 	const time_point & stamp_now()
 	{
-		return stamp_ = TimeSource::now();
+		return stamp_ = time_source::now();
 	}
 
 	time_duration duration_since_stamp() const
 	{
-		return TimeSource::now() - stamp_;
+		return time_source::now() - stamp_;
 	}
 
 	bool operator<(const timestamp & rhs) const
