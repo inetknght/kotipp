@@ -68,7 +68,8 @@ ENDIF()
 ADD_SUBDIRECTORY(thirdparty)
 INCLUDE_DIRECTORIES(SYSTEM ${GTEST_INCLUDE_DIRS})
 
-SET(COMMON_FLAGS "${COMMON_FLAGS} -Werror=all -Werror=unknown-pragmas -Werror=return-type -Wno-long-long -pedantic-errors -Wno-unused-function -Wno-vla -Werror=strict-aliasing -Werror=switch-enum")
+# -Werror=switch-enum
+SET(COMMON_FLAGS "${COMMON_FLAGS} -Werror=all -Werror=unknown-pragmas -Werror=return-type -Wno-long-long -pedantic-errors -Wno-unused-function -Wno-vla -Werror=strict-aliasing")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 ${COMMON_FLAGS}")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 ${COMMON_FLAGS}")
 
@@ -82,6 +83,10 @@ INCLUDE_DIRECTORIES(SYSTEM ${BZIP2_INCLUDE_DIRS})
 
 # kotipp: main support library and test executable
 ADD_SUBDIRECTORY(kotipp)
+
+# koti-tcp: tcpip networking library.
+# todo: refactor into koti-network, koti-tcp, koti-domain, etc
+ADD_SUBDIRECTORY(koti-tcp)
 
 INSTALL(EXPORT
 	kotipp
