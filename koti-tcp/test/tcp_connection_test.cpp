@@ -27,12 +27,12 @@ TEST_F(tcp_connection_tests, connect_async_send_receive)
 
 	EXPECT_FALSE(a->had_connected_);
 	EXPECT_TRUE(b->had_connected_);
-	EXPECT_NE(b->last_error_, boost::system::error_code());
-	EXPECT_EQ(b->last_error_, asio::error::basic_errors::connection_refused);
+	EXPECT_NE(b->last_connection_error_, boost::system::error_code());
+	EXPECT_EQ(b->last_connection_error_, asio::error::basic_errors::connection_refused);
 
-	b->last_error_ = {};
+	b->last_connection_error_ = {};
 	b->had_connected_ = false;
-	a->last_error_ = {};
+	a->last_connection_error_ = {};
 	a->had_connected_ = false;
 
 	std::shared_ptr<tcp::acceptor> acceptor = std::make_shared<tcp::acceptor>(ios_);
@@ -53,18 +53,18 @@ TEST_F(tcp_connection_tests, connect_async_send_receive)
 
 	// async_accept failed: a is already bound to the address.
 	EXPECT_TRUE(a->had_connected_);
-	EXPECT_EQ(a->last_error_, boost::asio::error::already_open);
-	EXPECT_EQ(a->last_error_.message(), boost::system::error_code(boost::asio::error::already_open).message());
+	EXPECT_EQ(a->last_connection_error_, boost::asio::error::already_open);
+	EXPECT_EQ(a->last_connection_error_.message(), boost::system::error_code(boost::asio::error::already_open).message());
 
 	// async_connect failed: remote end is not listening (aborted)
 	EXPECT_TRUE(b->had_connected_);
-	EXPECT_EQ(b->last_error_, boost::asio::error::connection_aborted);
-	EXPECT_EQ(b->last_error_.message(), boost::system::error_code(boost::asio::error::connection_aborted).message());
+	EXPECT_EQ(b->last_connection_error_, boost::asio::error::connection_aborted);
+	EXPECT_EQ(b->last_connection_error_.message(), boost::system::error_code(boost::asio::error::connection_aborted).message());
 
 	auto connectedish = test_clock::set_now(test_clock::now());
-	b->last_error_ = {};
+	b->last_connection_error_ = {};
 	b->had_connected_ = false;
-	a->last_error_ = {};
+	a->last_connection_error_ = {};
 	a->had_connected_ = false;
 
 	// reset A, close it from the address
@@ -95,12 +95,12 @@ TEST_F(tcp_connection_tests, connect_async_send_receive)
 	EXPECT_EQ(b->connection_duration(), (nowish - connectedish));
 
 	EXPECT_TRUE(a->had_connected_);
-	EXPECT_EQ(a->last_error_, boost::system::error_code());
-	EXPECT_EQ(a->last_error_.message(), boost::system::error_code().message());
+	EXPECT_EQ(a->last_connection_error_, boost::system::error_code());
+	EXPECT_EQ(a->last_connection_error_.message(), boost::system::error_code().message());
 
 	EXPECT_TRUE(b->had_connected_);
-	EXPECT_EQ(b->last_error_, boost::system::error_code());
-	EXPECT_EQ(b->last_error_.message(), boost::system::error_code().message());
+	EXPECT_EQ(b->last_connection_error_, boost::system::error_code());
+	EXPECT_EQ(b->last_connection_error_.message(), boost::system::error_code().message());
 
 	EXPECT_NO_THROW(b->async_write_some(asio::buffer("foobar")));
 	EXPECT_NO_THROW(a->async_read_some());
@@ -109,19 +109,19 @@ TEST_F(tcp_connection_tests, connect_async_send_receive)
 	ios_.reset();
 
 	EXPECT_TRUE(a->had_read_complete_);
-	EXPECT_EQ(a->last_error_, boost::system::error_code());
-	EXPECT_EQ(a->last_error_.message(), boost::system::error_code().message());
+	EXPECT_EQ(a->last_connection_error_, boost::system::error_code());
+	EXPECT_EQ(a->last_connection_error_.message(), boost::system::error_code().message());
 	EXPECT_EQ(a->last_read_size(), 0u);
 
 	EXPECT_TRUE(b->had_write_complete_);
-	EXPECT_EQ(b->last_error_, boost::system::error_code());
-	EXPECT_EQ(b->last_error_.message(), boost::system::error_code().message());
+	EXPECT_EQ(b->last_connection_error_, boost::system::error_code());
+	EXPECT_EQ(b->last_connection_error_.message(), boost::system::error_code().message());
 	EXPECT_EQ(b->last_write_size(), 1+strlen("foobar"));
 
 	a->had_read_complete_ = false;
-	a->last_error_ = boost::system::error_code();
+	a->last_connection_error_ = boost::system::error_code();
 	b->had_write_complete_ = false;
-	b->last_error_ = boost::system::error_code();
+	b->last_connection_error_ = boost::system::error_code();
 
 	a->read_buffer().resize(1024);
 	EXPECT_NO_THROW(a->async_read_some());
@@ -130,8 +130,8 @@ TEST_F(tcp_connection_tests, connect_async_send_receive)
 	ios_.reset();
 
 	EXPECT_TRUE(a->had_read_complete_);
-	EXPECT_EQ(a->last_error_, boost::system::error_code());
-	EXPECT_EQ(a->last_error_.message(), boost::system::error_code().message());
+	EXPECT_EQ(a->last_connection_error_, boost::system::error_code());
+	EXPECT_EQ(a->last_connection_error_.message(), boost::system::error_code().message());
 	EXPECT_EQ(a->last_read_size(), 1+strlen("foobar"));
 	EXPECT_EQ(a->read_buffer().size(), 1024u);
 

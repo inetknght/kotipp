@@ -44,7 +44,7 @@ public:
 
 	bool had_connected_ = false;
 	bool had_error_ = false;
-	boost::system::error_code last_error_;
+	boost::system::error_code last_connection_error_;
 	bool had_disconnected_ = false;
 	bool had_write_complete_ = false;
 	bool had_read_complete_ = false;
@@ -53,7 +53,7 @@ public:
 	on_connected(const boost::system::error_code & ec)
 	{
 		had_connected_ = true;
-		last_error_ = ec;
+		last_connection_error_ = ec;
 		return connection_timer_handler::on_connected(ec);
 	}
 
@@ -61,7 +61,7 @@ public:
 	on_write_complete(const boost::system::error_code & ec, std::size_t transferred)
 	{
 		had_write_complete_ = true;
-		last_error_ = ec;
+		last_connection_error_ = ec;
 		return buffered_write_connection_handler::on_write_complete(ec, transferred);
 	}
 
@@ -69,7 +69,7 @@ public:
 	on_read_complete(const boost::system::error_code & ec, std::size_t transferred)
 	{
 		had_read_complete_ = true;
-		last_error_ = ec;
+		last_connection_error_ = ec;
 		return buffered_read_connection_handler::on_read_complete(ec, transferred);
 	}
 
