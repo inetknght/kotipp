@@ -98,12 +98,14 @@ struct static_assurance
  * always zero due to alignment, among other things.
  * @param T
  */
-template <typename T, typename F = unsigned, unsigned count = detail::alignment_bits<T>()>
+template <typename T, typename F = unsigned>
 class bitfield_ptr
 	final /* non-virtual dtor */
 	: public detail::static_assurance<T>
 {
 public:
+	using static_assurance = detail::static_assurance<T>;
+
 	bitfield_ptr() = default;
 
 	bitfield_ptr(T * ptr) :
@@ -154,13 +156,13 @@ public:
 
 	T * pointer() const
 	{
-		return reinterpret_cast<T*>(ptr_ & ~field_mask());
+		return reinterpret_cast<T*>(ptr_ & ~static_assurance::mask());
 	}
 
 	T * take()
 	{
 		T * ptr = pointer();
-		ptr_ = (ptr_ & field_mask());
+		ptr_ = (ptr_ & static_assurance::mask());
 		return ptr;
 	}
 
@@ -178,13 +180,13 @@ public:
 
 	F flag() const
 	{
-		return static_cast<F>(ptr_) & field_mask();
+		return static_cast<F>(ptr_) & static_assurance::mask();
 	}
 
 	F assign_flag(F new_flag)
 	{
-		F v = (ptr_ & field_mask());
-		ptr_ = (ptr_ & ~field_mask()) | (new_flag & field_mask());
+		F v = (ptr_ & static_assurance::mask());
+		ptr_ = (ptr_ & ~static_assurance::mask()) | (new_flag & static_assurance::mask());
 		return v;
 	}
 
@@ -249,11 +251,6 @@ public:
 	}
 
 private:
-
-	static constexpr std::uintptr_t field_mask()
-	{
-		return detail::alignment_mask<T>();
-	}
 
 	std::uintptr_t ptr_ = reinterpret_cast<std::uintptr_t>(nullptr);
 };

@@ -226,7 +226,8 @@ TEST(bitfield_ptr_tests, construct_copy_move_destruct)
 			a = std::move(b);
 		}
 		{
-			auto * t = new align_to_16_size_16();
+			auto t_ = std::make_unique<a16s16>();
+			auto * t = t_.get();
 			EXPECT_NO_THROW(f.assign(t));
 			EXPECT_EQ(&t->v_, &f->v_);
 
@@ -247,3 +248,4 @@ TEST(bitfield_ptr_tests, construct_copy_move_destruct)
 		}
 	}
 }
+
