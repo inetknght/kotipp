@@ -148,59 +148,59 @@ TEST(bitfield_ptr_tests, sizes)
 
 TEST(bitfield_ptr_tests, alignment_bits)
 {
-	EXPECT_EQ(pa1s1  ::alignment_bits_, 0);
-	EXPECT_EQ(pa2s1  ::alignment_bits_, 1);
-	EXPECT_EQ(pa4s1  ::alignment_bits_, 2);
-	EXPECT_EQ(pa8s1  ::alignment_bits_, 3);
-	EXPECT_EQ(pa16s1 ::alignment_bits_, 4);
-	EXPECT_EQ(pa2s2  ::alignment_bits_, 1);
-	EXPECT_EQ(pa4s2  ::alignment_bits_, 2);
-	EXPECT_EQ(pa8s2  ::alignment_bits_, 3);
-	EXPECT_EQ(pa16s2 ::alignment_bits_, 4);
-	EXPECT_EQ(pa4s4  ::alignment_bits_, 2);
-	EXPECT_EQ(pa8s4  ::alignment_bits_, 3);
-	EXPECT_EQ(pa16s4 ::alignment_bits_, 4);
-	EXPECT_EQ(pa8s8  ::alignment_bits_, 3);
-	EXPECT_EQ(pa16s8 ::alignment_bits_, 4);
-	EXPECT_EQ(pa16s16::alignment_bits_, 4);
+	EXPECT_EQ(pa1s1  ::alignment_bits(), 0);
+	EXPECT_EQ(pa2s1  ::alignment_bits(), 1);
+	EXPECT_EQ(pa4s1  ::alignment_bits(), 2);
+	EXPECT_EQ(pa8s1  ::alignment_bits(), 3);
+	EXPECT_EQ(pa16s1 ::alignment_bits(), 4);
+	EXPECT_EQ(pa2s2  ::alignment_bits(), 1);
+	EXPECT_EQ(pa4s2  ::alignment_bits(), 2);
+	EXPECT_EQ(pa8s2  ::alignment_bits(), 3);
+	EXPECT_EQ(pa16s2 ::alignment_bits(), 4);
+	EXPECT_EQ(pa4s4  ::alignment_bits(), 2);
+	EXPECT_EQ(pa8s4  ::alignment_bits(), 3);
+	EXPECT_EQ(pa16s4 ::alignment_bits(), 4);
+	EXPECT_EQ(pa8s8  ::alignment_bits(), 3);
+	EXPECT_EQ(pa16s8 ::alignment_bits(), 4);
+	EXPECT_EQ(pa16s16::alignment_bits(), 4);
 }
 
 TEST(bitfield_ptr_tests, mask)
 {
-	EXPECT_EQ(pa1s1  ::mask_, 0);
-	EXPECT_EQ(pa2s1  ::mask_, 1);
-	EXPECT_EQ(pa4s1  ::mask_, 3);
-	EXPECT_EQ(pa8s1  ::mask_, 7);
-	EXPECT_EQ(pa16s1 ::mask_, 15);
-	EXPECT_EQ(pa2s2  ::mask_, 1);
-	EXPECT_EQ(pa4s2  ::mask_, 3);
-	EXPECT_EQ(pa8s2  ::mask_, 7);
-	EXPECT_EQ(pa16s2 ::mask_, 15);
-	EXPECT_EQ(pa4s4  ::mask_, 3);
-	EXPECT_EQ(pa8s4  ::mask_, 7);
-	EXPECT_EQ(pa16s4 ::mask_, 15);
-	EXPECT_EQ(pa8s8  ::mask_, 7);
-	EXPECT_EQ(pa16s8 ::mask_, 15);
-	EXPECT_EQ(pa16s16::mask_, 15);
+	EXPECT_EQ(pa1s1  ::mask(), 0);
+	EXPECT_EQ(pa2s1  ::mask(), 1);
+	EXPECT_EQ(pa4s1  ::mask(), 3);
+	EXPECT_EQ(pa8s1  ::mask(), 7);
+	EXPECT_EQ(pa16s1 ::mask(), 15);
+	EXPECT_EQ(pa2s2  ::mask(), 1);
+	EXPECT_EQ(pa4s2  ::mask(), 3);
+	EXPECT_EQ(pa8s2  ::mask(), 7);
+	EXPECT_EQ(pa16s2 ::mask(), 15);
+	EXPECT_EQ(pa4s4  ::mask(), 3);
+	EXPECT_EQ(pa8s4  ::mask(), 7);
+	EXPECT_EQ(pa16s4 ::mask(), 15);
+	EXPECT_EQ(pa8s8  ::mask(), 7);
+	EXPECT_EQ(pa16s8 ::mask(), 15);
+	EXPECT_EQ(pa16s16::mask(), 15);
 }
 
 TEST(bitfield_ptr_tests, mask_count)
 {
-	EXPECT_EQ(pa1s1  ::mask_count_, 0);
-	EXPECT_EQ(pa2s1  ::mask_count_, 1);
-	EXPECT_EQ(pa4s1  ::mask_count_, 2);
-	EXPECT_EQ(pa8s1  ::mask_count_, 3);
-	EXPECT_EQ(pa16s1 ::mask_count_, 4);
-	EXPECT_EQ(pa2s2  ::mask_count_, 1);
-	EXPECT_EQ(pa4s2  ::mask_count_, 2);
-	EXPECT_EQ(pa8s2  ::mask_count_, 3);
-	EXPECT_EQ(pa16s2 ::mask_count_, 4);
-	EXPECT_EQ(pa4s4  ::mask_count_, 2);
-	EXPECT_EQ(pa8s4  ::mask_count_, 3);
-	EXPECT_EQ(pa16s4 ::mask_count_, 4);
-	EXPECT_EQ(pa8s8  ::mask_count_, 3);
-	EXPECT_EQ(pa16s8 ::mask_count_, 4);
-	EXPECT_EQ(pa16s16::mask_count_, 4);
+	EXPECT_EQ(pa1s1  ::mask_count(), 0);
+	EXPECT_EQ(pa2s1  ::mask_count(), 1);
+	EXPECT_EQ(pa4s1  ::mask_count(), 2);
+	EXPECT_EQ(pa8s1  ::mask_count(), 3);
+	EXPECT_EQ(pa16s1 ::mask_count(), 4);
+	EXPECT_EQ(pa2s2  ::mask_count(), 1);
+	EXPECT_EQ(pa4s2  ::mask_count(), 2);
+	EXPECT_EQ(pa8s2  ::mask_count(), 3);
+	EXPECT_EQ(pa16s2 ::mask_count(), 4);
+	EXPECT_EQ(pa4s4  ::mask_count(), 2);
+	EXPECT_EQ(pa8s4  ::mask_count(), 3);
+	EXPECT_EQ(pa16s4 ::mask_count(), 4);
+	EXPECT_EQ(pa8s8  ::mask_count(), 3);
+	EXPECT_EQ(pa16s8 ::mask_count(), 4);
+	EXPECT_EQ(pa16s16::mask_count(), 4);
 }
 
 TEST(bitfield_ptr_tests, construct_copy_move_destruct)

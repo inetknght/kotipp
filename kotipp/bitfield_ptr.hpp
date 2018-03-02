@@ -7,16 +7,6 @@
 
 namespace kotipp {
 
-class incompatible_ptr : public std::logic_error {
-public:
-	using std::logic_error::logic_error;
-};
-
-class not_owned : public std::logic_error {
-public:
-	using std::logic_error::logic_error;
-};
-
 namespace detail
 {
 
@@ -78,12 +68,6 @@ constexpr std::uintptr_t n_bit_mask(const unsigned bit_num)
 		(0 < bit_num)
 		? (n_bit_mask(bit_num - 1) << 1) | 1
 		: 0;
-//	if constexpr ( bit_num )
-//	{
-//		static_assert(0 != bit_num, "");
-//		return n_bit_mask<bit_num - 1>() << 1 | 1;
-//	}
-//	return 1;
 }
 
 static_assert(n_bit_mask(1) == 1u,"");
@@ -101,9 +85,9 @@ constexpr std::uintptr_t alignment_mask()
 template <typename T>
 struct static_assurance
 {
-	static constexpr const std::uintptr_t alignment_bits_ = alignment_bits<T>();
-	static constexpr const std::uintptr_t mask_ = alignment_mask<T>();
-	static constexpr const std::uintptr_t mask_count_ = count_mask<mask_>();
+	static constexpr std::uintptr_t alignment_bits() { return detail::alignment_bits<T>(); }
+	static constexpr std::uintptr_t mask() { return detail::alignment_mask<T>(); }
+	static constexpr std::uintptr_t mask_count() { return detail::count_mask<mask()>(); }
 };
 
 } // namespace detail
