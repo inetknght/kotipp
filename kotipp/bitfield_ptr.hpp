@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <memory>
-#include <stdexcept>
 #include <cstdint>
 
 namespace kotipp {
