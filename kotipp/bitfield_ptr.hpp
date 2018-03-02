@@ -19,11 +19,11 @@ constexpr std::uintptr_t count_mask()
 		: 0;
 }
 
-static_assert(count_mask<0>() == 0,"");
-static_assert(count_mask<1>() == 1,"");
-static_assert(count_mask<3>() == 2,"");
-static_assert(count_mask<7>() == 3,"");
-static_assert(count_mask<15>() == 4,"");
+static_assert(count_mask<0>() == 0);
+static_assert(count_mask<1>() == 1);
+static_assert(count_mask<3>() == 2);
+static_assert(count_mask<7>() == 3);
+static_assert(count_mask<15>() == 4);
 
 constexpr std::uintptr_t alignment_bits(const std::uintptr_t resume)
 {
@@ -35,12 +35,12 @@ constexpr std::uintptr_t alignment_bits(const std::uintptr_t resume)
 		: 0;
 }
 
-static_assert(alignment_bits(0) == 0,"");
-static_assert(alignment_bits(1) == 0,"");
-static_assert(alignment_bits(2) == 1,"");
-static_assert(alignment_bits(4) == 2,"");
-static_assert(alignment_bits(8) == 3,"");
-static_assert(alignment_bits(16) == 4,"");
+static_assert(alignment_bits(0) == 0);
+static_assert(alignment_bits(1) == 0);
+static_assert(alignment_bits(2) == 1);
+static_assert(alignment_bits(4) == 2);
+static_assert(alignment_bits(8) == 3);
+static_assert(alignment_bits(16) == 4);
 
 template <typename T>
 constexpr std::uintptr_t alignment_bits()
@@ -70,10 +70,10 @@ constexpr std::uintptr_t n_bit_mask(const unsigned bit_num)
 		: 0;
 }
 
-static_assert(n_bit_mask(1) == 1u,"");
-static_assert(n_bit_mask(2) == 3u,"");
-static_assert(n_bit_mask(3) == 7u,"");
-static_assert(n_bit_mask(4) == 15u,"");
+static_assert(n_bit_mask(1) == 1u);
+static_assert(n_bit_mask(2) == 3u);
+static_assert(n_bit_mask(3) == 7u);
+static_assert(n_bit_mask(4) == 15u);
 
 template <typename T>
 constexpr std::uintptr_t alignment_mask()
