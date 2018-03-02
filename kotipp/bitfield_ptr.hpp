@@ -92,6 +92,8 @@ struct static_assurance
 
 /**
  * @brief bitfield_ptr
+ *  THIS IS A NON-OWNING POINTER. It does not perform lifetime management.
+ *
  *  Allows you to (ab)use the first individual bits of a T* which are typically
  * always zero due to alignment, among other things.
  * @param T
