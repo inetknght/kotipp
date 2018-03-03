@@ -70,25 +70,10 @@ public:
 std::ostream & operator<<(
 	std::ostream & o,
 	const typename listener_handler::error_handler_result & v
-)
-{
-	using e = typename listener_handler::error_handler_result;
-
-	switch (v)
-	{
-	case e::cancel_and_stop:
-		o << "cancel_and_stop"; break;
-	case e::ignore_error:
-		o << "ignore_error"; break;
-	case e::ignore_connection:
-		o << "ignore_connection"; break;
-	}
-
-	return o;
-}
+);
 
 class null_listener_handler
-	: public listener_handler
+	: private listener_handler
 {
 public:
 	using socket_type = tcp::socket;
@@ -115,8 +100,8 @@ public:
 };
 
 class listener_options
-	: public koti::options::configurator
-	, virtual private koti::listener_logs
+	: virtual private koti::listener_logs
+	, public koti::options::configurator
 {
 public:
 	using validate = koti::options::validate;
@@ -468,7 +453,7 @@ public:
 			return false;
 		}
 
-		return true;
+		return 0 != local_endpoint_.port();
 	}
 
 	bool

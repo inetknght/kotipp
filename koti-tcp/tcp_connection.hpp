@@ -39,7 +39,7 @@ public:
 };
 
 class null_connection_handler
-	: public connection_handler
+	: private connection_handler
 {
 public:
 	using action = typename connection_handler::action;
