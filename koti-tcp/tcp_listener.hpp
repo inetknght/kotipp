@@ -73,12 +73,12 @@ std::ostream & operator<<(
 );
 
 class null_listener_handler
-	: private listener_handler
 {
 public:
 	using socket_type = tcp::socket;
 	using acceptor_type = tcp::acceptor;
-	using error_handler_result = typename listener_handler::error_handler_result;
+	using error_handler_result = listener_handler::error_handler_result;
+	using connection_handler = null_connection_handler;
 
 	void
 	on_new_socket(

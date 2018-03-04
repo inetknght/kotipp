@@ -17,10 +17,16 @@ public:
 	using acceptor_type = tcp::acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
 	using connection_handler = null_connection_handler;
-	using listener_handler = null_listener_handler;
 	using connection_type = koti::connection<connection_handler>;
 	using time_source = std::chrono::steady_clock;
 	using listener_options = koti::listener_options;
+	
+	using listener_type = koti::listener<
+		tcp_listener_test_handler,
+		connection_type,
+		time_source,
+		listener_options
+	>;
 
 	using error_handler_result = typename listener_handler::error_handler_result;
 
@@ -59,6 +65,53 @@ public:
 	}
 
 	std::vector<tcp::socket> accepted_sockets_;
+};
+
+class tcp_listener_tests
+	: public testing::Test
+	, public tcp_listener_test_handler
+{
+public:
+	using connection_handler = tcp_listener_test_handler;
+	using listener_handler = tcp_listener_test_handler;
+	using connection_type = tcp_listener_test_handler::connection_type;
+	using time_source = tcp_listener_test_handler::time_source;
+	using listener_options = tcp_listener_test_handler::listener_options;
+	using listener_type = tcp_listener_test_handler::listener_type;
+
+	tcp_listener_tests(
+	)
+		: testing::Test()
+	{
+	}
+
+	virtual ~tcp_listener_tests()
+	{
+	}
+
+	typename listener_type::pointer & remake(
+	)
+	{
+		return listener_ = listener_type::make(
+			ios_
+		);
+	}
+
+	typename listener_type::pointer & remake(
+		const listener_type::options & listener_options
+	)
+	{
+		return listener_ = listener_type::make(
+			ios_,
+			listener_options.build()
+		);
+	}
+
+	asio::io_service ios_;
+	typename listener_type::pointer listener_;
+	typename listener_type::options listener_options_;
+
+	std::vector<koti::tcp::socket> accepted_sockets_;
 };
 
 } // namespace koti
