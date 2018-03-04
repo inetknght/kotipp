@@ -104,8 +104,10 @@ public:
 	plexer_type::options plexer_options_;
 };
 
-TEST(tcp_plexer_tests, does_it_compile_yet)
+TEST_F(tcp_plexer_tests, constructor_destructor)
 {
+	auto & plexer = remake();
+	EXPECT_NE(plexer.get(), nullptr);
 }
 
 } // namespace koti
