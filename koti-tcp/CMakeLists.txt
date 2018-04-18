@@ -6,6 +6,7 @@ SET(KOTI_TCP_LIB_DEPENDENCIES
 	koti_options_lib
 	kotipp_lib
 	${Boost_LIBRARIES}
+	spdlog
 )
 
 IF(KOTI_TCP_SRC)

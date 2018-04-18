@@ -1,4 +1,6 @@
 
-ADD_SUBDIRECTORY("googletest")
-SET(GTEST_INCLUDE_DIRS "${gtest_SOURCE_DIR}/include" PARENT_SCOPE)
+INCLUDE(ExternalProject)
 
+INCLUDE("bring-googletest-into-project.cmake")
+INCLUDE("bring-fmt-into-project.cmake")
+INCLUDE("bring-spdlog-into-project.cmake")
