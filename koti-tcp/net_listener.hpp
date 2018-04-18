@@ -14,7 +14,7 @@ namespace spd = spdlog;
 
 namespace koti {
 
-template <class, class, class, class, class>
+template <class, class, class, class, class, class>
 class listener;
 
 class listener_logs {
@@ -40,10 +40,14 @@ protected:
 	}
 };
 
+template <
+	class socket = tcp::socket,
+	class acceptor = tcp::acceptor
+>
 class listener_handler {
 public:
-	using socket_type = tcp::socket;
-	using acceptor_type = tcp::acceptor;
+	using socket_type = socket;
+	using acceptor_type = acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
 	using connection_handler = null_connection_handler;
 
@@ -67,17 +71,42 @@ public:
 	);
 };
 
+template <
+	class socket = tcp::socket,
+	class acceptor = tcp::acceptor
+>
 std::ostream & operator<<(
 	std::ostream & o,
-	const typename listener_handler::error_handler_result & v
-);
+	const typename listener_handler<socket, acceptor>::error_handler_result & v
+)
+{
+	using handler_type = listener_handler<socket, acceptor>;
+	using e = typename handler_type::error_handler_result;
 
+	switch (v)
+	{
+	case e::cancel_and_stop:
+		o << "cancel_and_stop"; break;
+	case e::ignore_error:
+		o << "ignore_error"; break;
+	case e::ignore_connection:
+		o << "ignore_connection"; break;
+	}
+
+	return o;
+}
+
+template <
+	class socket = tcp::socket,
+	class acceptor = tcp::acceptor
+>
 class null_listener_handler
 {
 public:
-	using socket_type = tcp::socket;
-	using acceptor_type = tcp::acceptor;
-	using error_handler_result = listener_handler::error_handler_result;
+	using socket_type = socket;
+	using acceptor_type = acceptor;
+	using handler_type = listener_handler<socket, acceptor>;
+	using error_handler_result = typename handler_type::error_handler_result;
 	using connection_handler = null_connection_handler;
 
 	void
@@ -219,7 +248,8 @@ protected:
 
 template <
 	class socket = tcp::socket,
-	class listener_handler = null_listener_handler,
+	class acceptor = tcp::acceptor,
+	class listener_handler = null_listener_handler<socket, acceptor>,
 	class connection = connection<socket, typename listener_handler::connection_handler>,
 	class time_source = std::chrono::steady_clock,
 	class listener_options = listener_options
@@ -237,7 +267,7 @@ public:
 
 	using pointer = std::shared_ptr<this_type>;
 	using socket_type = socket;
-	using acceptor_type = tcp::acceptor;
+	using acceptor_type = acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
 	using logs_type = listener_logs;
 	using listener_handler_type = listener_handler;
@@ -276,13 +306,13 @@ public:
 	void set_reuse_address(bool to_reuse = true)
 	{
 		typename acceptor_type::reuse_address option(to_reuse);
-		tcp::acceptor::set_option(option);
+		acceptor_type::set_option(option);
 	}
 
 	bool is_reuse_address() const
 	{
 		typename acceptor_type::reuse_address option;
-		tcp::acceptor::get_option(option);
+		acceptor_type::get_option(option);
 		return option.value();
 	}
 
@@ -293,7 +323,7 @@ public:
 	)
 	{
 		typename acceptor_type::linger option(is_set, timeout_in_seconds);
-		tcp::acceptor::set_option(option);
+		acceptor_type::set_option(option);
 		return option.timeout();
 	}
 
@@ -301,7 +331,7 @@ public:
 	is_linger() const
 	{
 		typename acceptor_type::linger option;
-		tcp::acceptor::get_option(option);
+		acceptor_type::get_option(option);
 		return option.timeout();
 	}
 
@@ -519,7 +549,7 @@ public:
 			assert(error_handler_result::ignore_error == result);
 		}
 
-		tcp::socket::endpoint_type remote = socket_.remote_endpoint(
+		typename socket_type::endpoint_type remote = socket_.remote_endpoint(
 			last_ec_.first
 		);
 		if ( last_ec_.first )
@@ -565,7 +595,7 @@ public:
 
 		// Specifically: update timestamp upon _exit_ of on_accept()
 		kotipp::timestamp<time_source>::stamp_now();
-		socket_ = tcp::socket(ios_);
+		socket_ = socket_type(ios_);
 		do_accept();
 	}
 	catch (...)
@@ -753,7 +783,7 @@ private:
 	}
 
 	asio::io_service & ios_;
-	tcp::socket socket_;
+	socket_type socket_;
 	error_descriptor last_ec_;
 	endpoint_type local_endpoint_;
 };

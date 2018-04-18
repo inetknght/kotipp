@@ -10,7 +10,7 @@ class tcp_listener_test_handler;
 class tcp_listener_test_handler
 	: virtual private listener_logs
 	, public net_connection_test_handler
-	, private null_listener_handler
+	, private null_listener_handler<tcp::socket, tcp::acceptor>
 {
 public:
 	using socket_type = tcp::socket;
@@ -23,13 +23,15 @@ public:
 
 	using listener_type = koti::listener<
 		socket_type,
+		acceptor_type,
 		tcp_listener_test_handler,
 		connection_type,
 		time_source,
 		listener_options
 	>;
 
-	using error_handler_result = typename listener_handler::error_handler_result;
+	using handler_type = listener_handler<socket_type, acceptor_type>;
+	using error_handler_result = typename handler_type::error_handler_result;
 
 	bool had_new_socket_ = false;
 	bool had_listener_error_ = false;

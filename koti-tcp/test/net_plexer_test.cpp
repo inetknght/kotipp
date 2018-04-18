@@ -10,7 +10,7 @@ class tcp_plexer_test_handler;
 class tcp_plexer_test_handler
 	: virtual private plexer_logs
 	, public tcp_listener_test_handler
-	, private null_plexer_handler
+	, private null_plexer_handler<tcp::socket, tcp::acceptor>
 {
 public:
 	using socket_type = tcp::socket;
@@ -25,6 +25,7 @@ public:
 	using listener_options = tcp_listener_test_handler::listener_type;
 	using plexer_type = koti::plexer<
 		socket_type,
+		acceptor_type,
 		tcp_plexer_test_handler,
 		connection_type,
 		listener_type
