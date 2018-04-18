@@ -9,7 +9,7 @@ namespace koti {
 class tcp_listener_test_handler;
 class tcp_listener_test_handler
 	: virtual private listener_logs
-	, public tcp_connection_test_handler
+	, public net_connection_test_handler
 	, private null_listener_handler
 {
 public:

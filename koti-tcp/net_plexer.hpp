@@ -205,4 +205,10 @@ protected:
 	std::vector<typename listener_type::pointer> listeners_;
 };
 
+template <class ... Args>
+using tcp_plexder = plexer<tcp::socket, Args ...>;
+
+template <class ... Args>
+using local_plexer = plexer<local::stream_protocol::socket, Args ...>;
+
 } // namespace koti

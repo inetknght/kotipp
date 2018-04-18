@@ -6,10 +6,10 @@
 
 namespace koti {
 
-class tcp_connection_test_handler;
+class net_connection_test_handler;
 class test_clock
 {
-	friend class tcp_connection_test_handler;
+	friend class net_connection_test_handler;
 public:
 	using clock = std::chrono::steady_clock;
 	using time_point = typename clock::time_point;
@@ -34,7 +34,7 @@ private:
 	static time_point now_;
 };
 
-class tcp_connection_test_handler
+class net_connection_test_handler
 	: public buffered_read_connection_handler
 	, public buffered_write_connection_handler
 	, public connection_timer_handler<test_clock>
@@ -81,20 +81,20 @@ public:
 	}
 };
 
-class tcp_connection_tests
+class net_connection_tests
 	: public testing::Test
 {
 public:
 	using socket_type = tcp::socket;
-	using connection_type = koti::connection<socket_type, tcp_connection_test_handler>;
+	using connection_type = koti::connection<socket_type, net_connection_test_handler>;
 
-	tcp_connection_tests(
+	net_connection_tests(
 	)
 		: testing::Test()
 	{
 	}
 
-	virtual ~tcp_connection_tests()
+	virtual ~net_connection_tests()
 	{
 	}
 

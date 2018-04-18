@@ -758,4 +758,11 @@ private:
 	endpoint_type local_endpoint_;
 };
 
+
+template <class ... Args>
+using tcp_listener = listener<tcp::socket, Args ...>;
+
+template <class ... Args>
+using local_listener = listener<local::stream_protocol::socket, Args ...>;
+
 } // namespace koti

@@ -10,6 +10,8 @@ namespace koti {
 
 namespace asio = boost::asio;
 namespace ip = asio::ip;
+namespace local = boost::asio::local;
+
 using tcp = ip::tcp;
 using port_number = std::uint16_t;
 

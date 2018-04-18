@@ -322,4 +322,10 @@ protected:
 	}
 };
 
+template <class ... Args>
+using tcp_connection = connection<tcp::socket, Args ...>;
+
+template <class ... Args>
+using local_connection = connection<local::stream_protocol::socket, Args ...>;
+
 } // namespace koti

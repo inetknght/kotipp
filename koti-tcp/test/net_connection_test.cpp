@@ -4,12 +4,12 @@ namespace koti {
 
 test_clock::time_point test_clock::now_ = clock::now();
 
-TEST_F(tcp_connection_tests, ctor_dtor)
+TEST_F(net_connection_tests, ctor_dtor)
 {
 	auto ptr = connection_type::make(ios_);
 }
 
-TEST_F(tcp_connection_tests, connect_async_send_receive)
+TEST_F(net_connection_tests, connect_async_send_receive)
 {
 	auto
 		a = connection_type::make(ios_),
