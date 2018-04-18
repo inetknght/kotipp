@@ -24,6 +24,7 @@ public:
 	using time_source = std::chrono::steady_clock;
 	using listener_options = tcp_listener_test_handler::listener_type;
 	using plexer_type = koti::plexer<
+		socket_type,
 		tcp_plexer_test_handler,
 		connection_type,
 		listener_type

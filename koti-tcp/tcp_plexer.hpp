@@ -14,7 +14,7 @@ namespace spd = spdlog;
 
 namespace koti {
 
-template <class, class, class>
+template <class, class, class, class>
 class plexer;
 
 class plexer_logs {
@@ -56,8 +56,9 @@ public:
 };
 
 template <
+	class socket = tcp::socket,
 	class plexer_handler = null_plexer_handler,
-	class connection = connection<plexer_handler>,
+	class connection = connection<socket, plexer_handler>,
 	class listener = listener<plexer_handler>
 >
 class plexer

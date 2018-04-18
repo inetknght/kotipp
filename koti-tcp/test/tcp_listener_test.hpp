@@ -17,11 +17,12 @@ public:
 	using acceptor_type = tcp::acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
 	using connection_handler = null_connection_handler;
-	using connection_type = koti::connection<connection_handler>;
+	using connection_type = koti::connection<socket_type, connection_handler>;
 	using time_source = std::chrono::steady_clock;
 	using listener_options = koti::listener_options;
-	
+
 	using listener_type = koti::listener<
+		socket_type,
 		tcp_listener_test_handler,
 		connection_type,
 		time_source,

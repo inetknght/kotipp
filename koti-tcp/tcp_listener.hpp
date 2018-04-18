@@ -14,7 +14,7 @@ namespace spd = spdlog;
 
 namespace koti {
 
-template <class, class, class, class>
+template <class, class, class, class, class>
 class listener;
 
 class listener_logs {
@@ -218,8 +218,9 @@ protected:
 };
 
 template <
+	class socket = tcp::socket,
 	class listener_handler = null_listener_handler,
-	class connection = connection<typename listener_handler::connection_handler>,
+	class connection = connection<socket, typename listener_handler::connection_handler>,
 	class time_source = std::chrono::steady_clock,
 	class listener_options = listener_options
 >
@@ -235,7 +236,7 @@ public:
 	using this_type = listener;
 
 	using pointer = std::shared_ptr<this_type>;
-	using socket_type = tcp::socket;
+	using socket_type = socket;
 	using acceptor_type = tcp::acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
 	using logs_type = listener_logs;

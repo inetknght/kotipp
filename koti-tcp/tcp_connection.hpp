@@ -11,7 +11,7 @@
 
 namespace koti {
 
-template <class>
+template <class, class>
 class connection;
 
 class connection_handler {
@@ -190,16 +190,17 @@ public:
 };
 
 template <
+	class socket = tcp::socket,
 	class connection_handler = null_connection_handler
 >
 class connection
 	: virtual public koti::inheritable_shared_from_this
-	, private tcp::socket
+	, private socket
 	, public connection_handler
 {
 public:
 	using this_type = connection;
-	using socket_type = tcp::socket;
+	using socket_type = socket;
 	using connection_handler_type = connection_handler;
 	using error_code = boost::system::error_code;
 
@@ -222,7 +223,7 @@ public:
 	}
 
 	static pointer make(
-		tcp::socket && s
+		socket_type && s
 	)
 	{
 		return protected_make_shared_enabler<this_type>(
@@ -230,14 +231,14 @@ public:
 		);
 	}
 
-	tcp::socket & as_socket()
+	socket_type & as_socket()
 	{
-		return static_cast<tcp::socket&>(*this);
+		return static_cast<socket_type&>(*this);
 	}
 
-	const tcp::socket & as_socket() const
+	const socket_type & as_socket() const
 	{
-		return static_cast<const tcp::socket&>(*this);
+		return static_cast<const socket_type&>(*this);
 	}
 
 	using socket_type::get_io_service;

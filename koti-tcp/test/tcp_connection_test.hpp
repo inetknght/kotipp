@@ -86,7 +86,7 @@ class tcp_connection_tests
 {
 public:
 	using socket_type = tcp::socket;
-	using connection_type = koti::connection<tcp_connection_test_handler>;
+	using connection_type = koti::connection<socket_type, tcp_connection_test_handler>;
 
 	tcp_connection_tests(
 	)
