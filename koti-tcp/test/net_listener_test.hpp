@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../tcp_listener.hpp"
+#include "../net_listener.hpp"
 
-#include "tcp_connection_test.hpp"
+#include "net_connection_test.hpp"
 
 namespace koti {
 

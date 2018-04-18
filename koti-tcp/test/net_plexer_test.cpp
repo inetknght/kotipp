@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "../tcp_plexer.hpp"
+#include "../net_plexer.hpp"
 
-#include "tcp_listener_test.hpp"
+#include "net_listener_test.hpp"
 
 namespace koti {
 

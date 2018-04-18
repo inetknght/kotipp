@@ -1,4 +1,4 @@
-#include "tcp_connection_test.hpp"
+#include "net_connection_test.hpp"
 
 namespace koti {
 

@@ -9,8 +9,8 @@ namespace spd = spdlog;
 #include <numeric>
 #include <vector>
 
-#include "tcp_listener.hpp"
-#include "tcp_connection.hpp"
+#include "net_listener.hpp"
+#include "net_connection.hpp"
 
 namespace koti {
 

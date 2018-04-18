@@ -6,11 +6,11 @@
 #include "spdlog/spdlog.h"
 namespace spd = spdlog;
 
-#include "tcp.hpp"
+#include "net.hpp"
 
 #include "options.hpp"
 
-#include "tcp_connection.hpp"
+#include "net_connection.hpp"
 
 namespace koti {
 

@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../tcp_connection.hpp"
+#include "../net_connection.hpp"
 
 namespace koti {
 
