@@ -190,17 +190,18 @@ public:
 };
 
 template <
-	class socket = tcp::socket,
+	class protocol = ip::tcp,
 	class connection_handler = null_connection_handler
 >
 class connection
 	: virtual public koti::inheritable_shared_from_this
-	, private socket
+	, private protocol::socket
 	, public connection_handler
 {
 public:
 	using this_type = connection;
-	using socket_type = socket;
+	using protocol_type = protocol;
+	using socket_type = typename protocol::socket;
 	using connection_handler_type = connection_handler;
 	using error_code = boost::system::error_code;
 
@@ -241,7 +242,7 @@ public:
 		return static_cast<const socket_type&>(*this);
 	}
 
-	using socket_type::get_io_service;
+	using socket_type::get_executor;
 	using socket_type::get_option;
 	using socket_type::local_endpoint;
 	using socket_type::remote_endpoint;
@@ -322,10 +323,33 @@ protected:
 	}
 };
 
-template <class ... Args>
-using tcp_connection = connection<tcp::socket, Args ...>;
+template <
+	class handler
+>
+using tcp4_connection = connection<
+	tcp4,
+	handler
+>;
 
-template <class ... Args>
-using local_connection = connection<local::stream_protocol::socket, Args ...>;
+template <
+	class handler
+>
+using tcp6_connection = connection<
+	tcp6,
+	handler
+>;
+
+template <
+	class handler
+>
+using tcp_connection = tcp6_connection<handler>;
+
+template <
+	class handler
+>
+using local_connection = connection<
+	local_stream,
+	handler
+>;
 
 } // namespace koti

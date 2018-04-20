@@ -10,9 +10,10 @@ class tcp_plexer_test_handler;
 class tcp_plexer_test_handler
 	: virtual private plexer_logs
 	, public tcp_listener_test_handler
-	, private null_plexer_handler<tcp::socket, tcp::acceptor>
+	, private null_plexer_handler<tcp>
 {
 public:
+	using protocol_type = tcp;
 	using socket_type = tcp::socket;
 	using acceptor_type = tcp::acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
@@ -24,8 +25,7 @@ public:
 	using time_source = std::chrono::steady_clock;
 	using listener_options = tcp_listener_test_handler::listener_type;
 	using plexer_type = koti::plexer<
-		socket_type,
-		acceptor_type,
+		protocol_type,
 		tcp_plexer_test_handler,
 		connection_type,
 		listener_type
@@ -40,7 +40,7 @@ public:
 	void
 	on_new_socket(
 		socket_type && s,
-		const typename socket_type::endpoint_type & remote_endpoint
+		const endpoint_type & remote_endpoint
 	)
 	{
 		had_new_socket_ = true;
@@ -67,7 +67,7 @@ public:
 		return error_handler_result::cancel_and_stop;
 	}
 
-	std::vector<tcp::socket> accepted_sockets_;
+	std::vector<socket_type> accepted_sockets_;
 };
 
 class tcp_plexer_tests

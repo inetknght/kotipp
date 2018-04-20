@@ -10,27 +10,27 @@ class tcp_listener_test_handler;
 class tcp_listener_test_handler
 	: virtual private listener_logs
 	, public net_connection_test_handler
-	, private null_listener_handler<tcp::socket, tcp::acceptor>
+	, private null_listener_handler<tcp>
 {
 public:
+	using protocol_type = tcp;
 	using socket_type = tcp::socket;
 	using acceptor_type = tcp::acceptor;
 	using endpoint_type = typename acceptor_type::endpoint_type;
 	using connection_handler = null_connection_handler;
-	using connection_type = koti::connection<socket_type, connection_handler>;
+	using connection_type = koti::connection<protocol_type, connection_handler>;
 	using time_source = std::chrono::steady_clock;
-	using listener_options = koti::listener_options;
+	using listener_options = koti::listener_options<protocol_type>;
 
 	using listener_type = koti::listener<
-		socket_type,
-		acceptor_type,
+		tcp,
 		tcp_listener_test_handler,
 		connection_type,
 		time_source,
 		listener_options
 	>;
 
-	using handler_type = listener_handler<socket_type, acceptor_type>;
+	using handler_type = listener_handler<protocol_type>;
 	using error_handler_result = typename handler_type::error_handler_result;
 
 	bool had_new_socket_ = false;
@@ -40,7 +40,7 @@ public:
 	void
 	on_new_socket(
 		socket_type && s,
-		const typename socket_type::endpoint_type & remote_endpoint
+		const endpoint_type & remote_endpoint
 	)
 	{
 		had_new_socket_ = true;
@@ -67,7 +67,7 @@ public:
 		return error_handler_result::cancel_and_stop;
 	}
 
-	std::vector<tcp::socket> accepted_sockets_;
+	std::vector<socket_type> accepted_sockets_;
 };
 
 class tcp_listener_tests

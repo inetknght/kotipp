@@ -7,13 +7,13 @@
 namespace koti {
 
 class net_connection_test_handler;
+
 class test_clock
 {
-	friend class net_connection_test_handler;
 public:
 	using clock = std::chrono::steady_clock;
 	using time_point = typename clock::time_point;
-	using time_duration = typename time_point::duration;
+	using duration = typename time_point::duration;
 
 	static time_point now()
 	{
@@ -34,13 +34,15 @@ private:
 	static time_point now_;
 };
 
+using test_connection_timer_handler = connection_timer_handler<test_clock>;
 class net_connection_test_handler
 	: public buffered_read_connection_handler
 	, public buffered_write_connection_handler
-	, public connection_timer_handler<test_clock>
+	, public test_connection_timer_handler
 {
 public:
 	using action = typename connection_handler::action;
+	using connection_timer_handler_type = test_connection_timer_handler;
 
 	bool had_connected_ = false;
 	bool had_error_ = false;
@@ -54,7 +56,7 @@ public:
 	{
 		had_connected_ = true;
 		last_connection_error_ = ec;
-		return connection_timer_handler::on_connected(ec);
+		return connection_timer_handler_type::on_connected(ec);
 	}
 
 	action
@@ -81,12 +83,17 @@ public:
 	}
 };
 
+template <
+	class connection
+>
 class net_connection_tests
 	: public testing::Test
 {
 public:
-	using socket_type = tcp::socket;
-	using connection_type = koti::connection<socket_type, net_connection_test_handler>;
+	using connection_type = connection;
+	using protocol_type = typename connection::protocol_type;
+	using socket_type = typename connection::socket_type;
+	using endpoint_type = typename socket_type::endpoint_type;
 
 	net_connection_tests(
 	)
@@ -106,7 +113,19 @@ public:
 	asio::io_service ios_;
 
 	boost::system::error_code test_ec_;
-	std::vector<koti::tcp::socket> sockets_;
+	std::vector<socket_type> sockets_;
 };
+
+//using test_tcp_connection = tcp_connection<net_connection_test_handler>;
+using test_tcp4_connection = tcp4_connection<net_connection_test_handler>;
+using test_tcp6_connection = tcp6_connection<net_connection_test_handler>;
+using test_local_connection = local_connection<net_connection_test_handler>;
+using net_connection_test_types = ::testing::Types<
+	//test_tcp_connection,
+	test_tcp4_connection,
+	test_tcp6_connection,
+	test_local_connection
+>;
+TYPED_TEST_CASE(net_connection_tests, net_connection_test_types);
 
 } // namespace koti

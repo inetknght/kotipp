@@ -14,7 +14,7 @@ namespace spd = spdlog;
 
 namespace koti {
 
-template <class, class, class, class, class>
+template <class, class, class, class>
 class plexer;
 
 class plexer_logs {
@@ -41,34 +41,31 @@ protected:
 };
 
 template <
-	class socket = tcp::socket,
-	class acceptor = tcp::acceptor
+	class protocol = tcp
 >
 class plexer_handler
-	: private listener_handler<socket, acceptor>
+	: private listener_handler<protocol>
 {
 public:
-	using listener_handler_type = listener_handler<socket, acceptor>;
+	using listener_handler_type = listener_handler<protocol>;
 };
 
 template <
-	class socket = tcp::socket,
-	class acceptor = tcp::acceptor
+	class protocol = tcp
 >
 class null_plexer_handler
-	: private plexer_handler<socket, acceptor>
-	, public null_listener_handler<socket, acceptor>
+	: private plexer_handler<protocol>
+	, public null_listener_handler<protocol>
 {
 public:
-	using listener_handler_type = null_listener_handler<socket, acceptor>;
+	using listener_handler_type = null_listener_handler<protocol>;
 };
 
 template <
-	class socket = tcp::socket,
-	class acceptor = tcp::acceptor,
-	class plexer_handler = null_plexer_handler<socket, acceptor>,
-	class connection = connection<socket, plexer_handler>,
-	class listener = listener<socket, acceptor, plexer_handler, connection>
+	class protocol = tcp,
+	class plexer_handler = null_plexer_handler<protocol>,
+	class connection = connection<protocol, plexer_handler>,
+	class listener = listener<protocol, plexer_handler, connection>
 >
 class plexer
 	: virtual public koti::inheritable_shared_from_this

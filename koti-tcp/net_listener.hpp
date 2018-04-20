@@ -14,7 +14,7 @@ namespace spd = spdlog;
 
 namespace koti {
 
-template <class, class, class, class, class, class>
+template <class, class, class, class, class>
 class listener;
 
 class listener_logs {
@@ -41,14 +41,13 @@ protected:
 };
 
 template <
-	class socket = tcp::socket,
-	class acceptor = tcp::acceptor
+	class protocol = tcp
 >
 class listener_handler {
 public:
-	using socket_type = socket;
-	using acceptor_type = acceptor;
-	using endpoint_type = typename acceptor_type::endpoint_type;
+	using socket = typename protocol::socket;
+	using acceptor = typename protocol::acceptor;
+	using endpoint = typename protocol::endpoint;
 	using connection_handler = null_connection_handler;
 
 	enum class [[nodiscard]] error_handler_result
@@ -60,8 +59,8 @@ public:
 
 	void
 	on_new_socket(
-		socket_type && s,
-		const typename socket_type::endpoint_type & remote_endpoint
+		socket && s,
+		const endpoint & remote_endpoint
 	);
 
 	error_handler_result
@@ -72,15 +71,14 @@ public:
 };
 
 template <
-	class socket = tcp::socket,
-	class acceptor = tcp::acceptor
+	class protocol = tcp
 >
 std::ostream & operator<<(
 	std::ostream & o,
-	const typename listener_handler<socket, acceptor>::error_handler_result & v
+	const typename listener_handler<protocol>::error_handler_result & v
 )
 {
-	using handler_type = listener_handler<socket, acceptor>;
+	using handler_type = listener_handler<protocol>;
 	using e = typename handler_type::error_handler_result;
 
 	switch (v)
@@ -97,22 +95,22 @@ std::ostream & operator<<(
 }
 
 template <
-	class socket = tcp::socket,
-	class acceptor = tcp::acceptor
+	class protocol = tcp
 >
 class null_listener_handler
 {
 public:
-	using socket_type = socket;
-	using acceptor_type = acceptor;
-	using handler_type = listener_handler<socket, acceptor>;
+	using socket = typename protocol::socket;
+	using acceptor = typename protocol::acceptor;
+	using endpoint = typename protocol::endpoint;
+	using handler_type = listener_handler<protocol>;
 	using error_handler_result = typename handler_type::error_handler_result;
 	using connection_handler = null_connection_handler;
 
 	void
 	on_new_socket(
-		socket_type && s,
-		const typename socket_type::endpoint_type &
+		socket && s,
+		const endpoint &
 	)
 	{
 		s.close();
@@ -128,6 +126,9 @@ public:
 	}
 };
 
+template <
+	class protocol = tcp
+>
 class listener_options
 	: virtual private koti::listener_logs
 	, public koti::options::configurator
@@ -230,9 +231,9 @@ public:
 		return port_;
 	}
 
-	tcp::endpoint build() const
+	typename protocol::endpoint build() const
 	{
-		return {address(), port()};
+		return typename protocol::endpoint{address(), port()};
 	}
 
 protected:
@@ -247,28 +248,27 @@ protected:
 };
 
 template <
-	class socket = tcp::socket,
-	class acceptor = tcp::acceptor,
-	class listener_handler = null_listener_handler<socket, acceptor>,
-	class connection = connection<socket, typename listener_handler::connection_handler>,
+	class protocol = tcp,
+	class listener_handler = null_listener_handler<protocol>,
+	class connection = connection<protocol, typename listener_handler::connection_handler>,
 	class time_source = std::chrono::steady_clock,
-	class listener_options = listener_options
+	class Options = listener_options<protocol>
 >
 class listener
 	: virtual public koti::inheritable_shared_from_this
 	, virtual public listener_logs
 	, public listener_handler
-	, public listener_options
+	, public Options
 	, private kotipp::timestamp<time_source>
-	, private tcp::acceptor
+	, private protocol::acceptor
 {
 public:
 	using this_type = listener;
 
 	using pointer = std::shared_ptr<this_type>;
-	using socket_type = socket;
-	using acceptor_type = acceptor;
-	using endpoint_type = typename acceptor_type::endpoint_type;
+	using socket = typename protocol::socket;
+	using acceptor = typename protocol::acceptor;
+	using endpoint = typename protocol::endpoint;
 	using logs_type = listener_logs;
 	using listener_handler_type = listener_handler;
 	using connection_type = connection;
@@ -279,7 +279,7 @@ public:
 	using time_point = typename time_source::time_point;
 	using time_duration = typename time_point::duration;
 
-	using options = listener_options;
+	using options = Options;
 
 	// .first is the error code
 	// .second is the message, if any
@@ -305,14 +305,14 @@ public:
 
 	void set_reuse_address(bool to_reuse = true)
 	{
-		typename acceptor_type::reuse_address option(to_reuse);
-		acceptor_type::set_option(option);
+		typename acceptor::reuse_address option(to_reuse);
+		acceptor::set_option(option);
 	}
 
 	bool is_reuse_address() const
 	{
-		typename acceptor_type::reuse_address option;
-		acceptor_type::get_option(option);
+		typename acceptor::reuse_address option;
+		acceptor::get_option(option);
 		return option.value();
 	}
 
@@ -322,16 +322,16 @@ public:
 		int timeout_in_seconds = 5
 	)
 	{
-		typename acceptor_type::linger option(is_set, timeout_in_seconds);
-		acceptor_type::set_option(option);
+		typename acceptor::linger option(is_set, timeout_in_seconds);
+		acceptor::set_option(option);
 		return option.timeout();
 	}
 
 	bool
 	is_linger() const
 	{
-		typename acceptor_type::linger option;
-		acceptor_type::get_option(option);
+		typename acceptor::linger option;
+		acceptor::get_option(option);
 		return option.timeout();
 	}
 
@@ -345,7 +345,7 @@ public:
 		}
 
 		last_ec_ = {};
-		acceptor_type::open(boost::asio::ip::tcp::v4(), last_ec_.first);
+		acceptor::open(protocol{}, last_ec_.first);
 		listener_logs::logger()->debug(
 			"open():{}",
 			last_ec_.first
@@ -362,9 +362,7 @@ public:
 
 	bool
 	bind(
-		tcp::endpoint endpoint = tcp::endpoint(
-			ip::address::from_string("127.0.0.1"), 0
-		)
+		endpoint at = protocol::local_endpoint()
 	)
 	{
 		if ( is_bound() )
@@ -377,25 +375,25 @@ public:
 		{
 			listener_logs::logger()->debug(
 				"bind({})::open()",
-				endpoint
+				at
 			);
 			return false;
 		}
 
-		acceptor_type::bind(
-			endpoint,
+		acceptor::bind(
+			at,
 			last_ec_.first
 		);
 		listener_logs::logger()->debug(
 			"bind({}):{}",
-			endpoint,
+			at,
 			last_ec_.first
 		);
 		if ( last_ec_.first )
 		{
 			last_ec_.second = fmt::format(
 				"bind({})::bind()",
-				endpoint
+				at
 			);
 			log_error();
 			return false;
@@ -409,7 +407,7 @@ public:
 				local_endpoint_
 			);
 			log_error();
-			close();
+			acceptor::close();
 			return false;
 		}
 
@@ -440,8 +438,8 @@ public:
 			return false;
 		}
 
-		acceptor_type::listen(
-			acceptor_type::max_listen_connections,
+		acceptor::listen(
+			acceptor::max_listen_connections,
 			last_ec_.first
 		);
 		if ( last_ec_.first )
@@ -458,13 +456,13 @@ public:
 	void
 	stop()
 	{
-		acceptor_type::close();
+		acceptor::close();
 	}
 
 	bool
 	is_open() const
 	{
-		return acceptor_type::is_open();
+		return acceptor::is_open();
 	}
 
 	bool
@@ -476,7 +474,7 @@ public:
 		}
 
 		last_ec_ = {};
-		local_endpoint_  = acceptor_type::local_endpoint(last_ec_.first);
+		local_endpoint_  = acceptor::local_endpoint(last_ec_.first);
 		if ( last_ec_.first )
 		{
 			last_ec_.second = "is_bound()::local_endpoint()";
@@ -497,7 +495,7 @@ public:
 
 		last_ec_ = {};
 		is_listening_option option;
-		acceptor_type::get_option(option, last_ec_.first);
+		acceptor::get_option(option, last_ec_.first);
 		if ( last_ec_.first )
 		{
 			last_ec_.second = "is_listening()";
@@ -508,7 +506,7 @@ public:
 		return option;
 	}
 
-	endpoint_type
+	endpoint
 	local_endpoint()
 	{
 		if ( false == is_bound() )
@@ -522,7 +520,7 @@ public:
 	void
 	do_accept()
 	{
-		acceptor_type::async_accept(
+		acceptor::async_accept(
 			socket_,
 			[=](const boost::system::error_code & ec)
 		{
@@ -539,7 +537,7 @@ public:
 			auto result = fail(ec, "accept()");
 			if ( error_handler_result::cancel_and_stop == result )
 			{
-				acceptor_type::close();
+				acceptor::close();
 				return;
 			}
 			if ( error_handler_result::ignore_connection == result )
@@ -549,7 +547,7 @@ public:
 			assert(error_handler_result::ignore_error == result);
 		}
 
-		typename socket_type::endpoint_type remote = socket_.remote_endpoint(
+		endpoint remote = socket_.remote_endpoint(
 			last_ec_.first
 		);
 		if ( last_ec_.first )
@@ -595,7 +593,7 @@ public:
 
 		// Specifically: update timestamp upon _exit_ of on_accept()
 		kotipp::timestamp<time_source>::stamp_now();
-		socket_ = socket_type(ios_);
+		socket_ = socket(ios_);
 		do_accept();
 	}
 	catch (...)
@@ -643,9 +641,9 @@ protected:
 		: koti::inheritable_shared_from_this()
 		, logs_type()
 		, listener_handler()
-		, listener_options()
+		, options()
 		, kotipp::timestamp<time_source>()
-		, acceptor_type(ios)
+		, acceptor(ios)
 		, ios_(ios)
 		, socket_(ios)
 	{
@@ -659,9 +657,9 @@ protected:
 		: koti::inheritable_shared_from_this()
 		, logs_type()
 		, listener_handler()
-		, listener_options()
+		, options()
 		, kotipp::timestamp<time_source>()
-		, acceptor_type(ios)
+		, acceptor(ios)
 		, ios_(ios)
 		, socket_(ios)
 	{
@@ -688,7 +686,7 @@ protected:
 		}
 
 		// Start listening for connections, but do not yet start accepting.
-		acceptor_type::listen(boost::asio::socket_base::max_connections, last_ec_.first );
+		acceptor::listen(boost::asio::socket_base::max_connections, last_ec_.first );
 		if( last_ec_.first )
 		{
 			ignore_failure(last_ec_.first, "listen");
@@ -783,16 +781,21 @@ private:
 	}
 
 	asio::io_service & ios_;
-	socket_type socket_;
+	socket socket_;
 	error_descriptor last_ec_;
-	endpoint_type local_endpoint_;
+	endpoint local_endpoint_;
 };
 
+template <class ... Args>
+using tcp4_listener = listener<tcp4, Args ...>;
 
 template <class ... Args>
-using tcp_listener = listener<tcp::socket, Args ...>;
+using tcp6_listener = listener<tcp6, Args ...>;
 
 template <class ... Args>
-using local_listener = listener<local::stream_protocol::socket, Args ...>;
+using tcp_listener = tcp6_listener<Args ...>;
+
+template <class ... Args>
+using local_listener = listener<local_stream, Args ...>;
 
 } // namespace koti

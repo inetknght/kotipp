@@ -4,26 +4,30 @@ namespace koti {
 
 test_clock::time_point test_clock::now_ = clock::now();
 
-TEST_F(net_connection_tests, ctor_dtor)
+TYPED_TEST(net_connection_tests, ctor_dtor)
 {
-	auto ptr = connection_type::make(ios_);
+	auto ptr = TypeParam::make(this->ios_);
 }
 
-TEST_F(net_connection_tests, connect_async_send_receive)
+TYPED_TEST(net_connection_tests, connect_async_send_receive)
 {
 	auto
-		a = connection_type::make(ios_),
-		b = connection_type::make(ios_);
+		a = TypeParam::make(this->ios_),
+		b = TypeParam::make(this->ios_);
 
-	tcp::endpoint local;
-	local.address(ip::address::from_string("127.0.0.1"));
+	auto local = TypeParam::protocol_type::local_endpoint();
 
-	a->open(asio::ip::tcp::v4());
+	a->open(typename TypeParam::socket_type::protocol_type());
+
+	EXPECT_FALSE(
+		"FAILURE from below: code was written for TCP, not appropriate"
+		" for local sockets: local sockets do not have ports, and bind"
+		" without a port does not randomly select one.");
 	a->bind(local);
 	b->async_connect(a->local_endpoint());
 
-	ios_.run();
-	ios_.reset();
+	this->ios_.run();
+	this->ios_.reset();
 
 	EXPECT_FALSE(a->had_connected_);
 	EXPECT_TRUE(b->had_connected_);
@@ -35,8 +39,11 @@ TEST_F(net_connection_tests, connect_async_send_receive)
 	a->last_connection_error_ = {};
 	a->had_connected_ = false;
 
-	std::shared_ptr<tcp::acceptor> acceptor = std::make_shared<tcp::acceptor>(ios_);
-	EXPECT_NO_THROW(acceptor->open(ip::tcp::v4()));
+	using protocol = typename TypeParam::protocol_type;
+	using acceptor_type = typename protocol::acceptor;
+
+	std::shared_ptr<acceptor_type> acceptor = std::make_shared<acceptor_type>(this->ios_);
+	EXPECT_NO_THROW(acceptor->open(typename TypeParam::protocol_type()));
 	EXPECT_NO_THROW(acceptor->bind(local));
 	EXPECT_NO_THROW(acceptor->listen());
 	EXPECT_NO_THROW(acceptor->async_accept(
@@ -48,8 +55,8 @@ TEST_F(net_connection_tests, connect_async_send_receive)
 
 	EXPECT_NO_THROW(b->async_connect(acceptor->local_endpoint()));
 
-	ios_.run();
-	ios_.reset();
+	this->ios_.run();
+	this->ios_.reset();
 
 	// async_accept failed: a is already bound to the address.
 	EXPECT_TRUE(a->had_connected_);
@@ -72,7 +79,7 @@ TEST_F(net_connection_tests, connect_async_send_receive)
 
 	// reset acceptor. this may be optional.
 	// EXPECT_NO_THROW(acceptor->close());
-	// EXPECT_NO_THROW(acceptor->open(ip::tcp::v4()));
+	// EXPECT_NO_THROW(acceptor->open(TypeParam::default_protocol()));
 	// EXPECT_NO_THROW(acceptor->bind(local));
 	EXPECT_NO_THROW(acceptor->listen());
 	EXPECT_NO_THROW(acceptor->async_accept(
@@ -84,8 +91,8 @@ TEST_F(net_connection_tests, connect_async_send_receive)
 
 	EXPECT_NO_THROW(b->async_connect(acceptor->local_endpoint()));
 
-	ios_.run();
-	ios_.reset();
+	this->ios_.run();
+	this->ios_.reset();
 
 	auto nowish = test_clock::set_now(connectedish + std::chrono::seconds(10));
 	ASSERT_LT(connectedish, nowish);
@@ -105,8 +112,8 @@ TEST_F(net_connection_tests, connect_async_send_receive)
 	EXPECT_NO_THROW(b->async_write_some(asio::buffer("foobar")));
 	EXPECT_NO_THROW(a->async_read_some());
 
-	ios_.run();
-	ios_.reset();
+	this->ios_.run();
+	this->ios_.reset();
 
 	EXPECT_TRUE(a->had_read_complete_);
 	EXPECT_EQ(a->last_connection_error_, boost::system::error_code());
@@ -126,8 +133,8 @@ TEST_F(net_connection_tests, connect_async_send_receive)
 	a->read_buffer().resize(1024);
 	EXPECT_NO_THROW(a->async_read_some());
 
-	ios_.run();
-	ios_.reset();
+	this->ios_.run();
+	this->ios_.reset();
 
 	EXPECT_TRUE(a->had_read_complete_);
 	EXPECT_EQ(a->last_connection_error_, boost::system::error_code());
@@ -138,8 +145,8 @@ TEST_F(net_connection_tests, connect_async_send_receive)
 	EXPECT_NO_THROW(a->close());
 	EXPECT_NO_THROW(b->close());
 
-	ios_.run();
-	ios_.reset();
+	this->ios_.run();
+	this->ios_.reset();
 }
 
 } // namespace koti
