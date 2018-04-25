@@ -115,17 +115,26 @@ public:
 	boost::system::error_code test_ec_;
 	std::vector<socket_type> sockets_;
 };
+TYPED_TEST_CASE_P(net_connection_tests);
 
 //using test_tcp_connection = tcp_connection<net_connection_test_handler>;
 using test_tcp4_connection = tcp4_connection<net_connection_test_handler>;
 using test_tcp6_connection = tcp6_connection<net_connection_test_handler>;
 using test_local_connection = local_connection<net_connection_test_handler>;
-using net_connection_test_types = ::testing::Types<
+using net_connection_all_tests = ::testing::Types<
 	//test_tcp_connection,
 	test_tcp4_connection,
 	test_tcp6_connection,
 	test_local_connection
 >;
-TYPED_TEST_CASE(net_connection_tests, net_connection_test_types);
+
+using net_connection_tcp_tests = ::testing::Types<
+	test_tcp4_connection,
+	test_tcp6_connection
+>;
+
+using net_connection_local_tests = ::testing::Types<
+	test_local_connection
+>;
 
 } // namespace koti
