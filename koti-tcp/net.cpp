@@ -3,6 +3,11 @@
 namespace koti
 {
 
+tcp4::tcp4()
+	: ip::tcp(ip::tcp::v4())
+{
+}
+
 tcp4
 tcp4::v4()
 {
@@ -21,6 +26,11 @@ tcp4::local_endpoint()
 	endpoint local;
 	local.address(ip::address::from_string("127.0.0.1"));
 	return local;
+}
+
+tcp6::tcp6()
+	: ip::tcp(ip::tcp::v6())
+{
 }
 
 tcp4

@@ -23,7 +23,7 @@ public:
 	{
 	public:
 		using basic_endpoint::basic_endpoint;
-		tcp4 protocol() const { return {}; }
+		inline tcp4 protocol() const { return {}; }
 	};
 
 	//using endpoint = asio::ip::basic_endpoint<tcp4>;
@@ -32,10 +32,7 @@ public:
 	using resolver = asio::ip::basic_resolver<tcp4>;
 	using iostream = asio::basic_socket_iostream<tcp4>;
 
-	tcp4()
-		: ip::tcp(ip::tcp::v4())
-	{
-	}
+	tcp4();
 
 	static
 	tcp4
@@ -60,7 +57,7 @@ public:
 	{
 	public:
 		using basic_endpoint::basic_endpoint;
-		tcp6 protocol() const { return {}; }
+		inline tcp6 protocol() const { return {}; }
 	};
 
 	//using endpoint = asio::ip::basic_endpoint<tcp6>;
@@ -69,10 +66,7 @@ public:
 	using resolver = asio::ip::basic_resolver<tcp6>;
 	using iostream = asio::basic_socket_iostream<tcp6>;
 
-	tcp6()
-		: ip::tcp(ip::tcp::v6())
-	{
-	}
+	tcp6();
 
 	static
 	tcp4
