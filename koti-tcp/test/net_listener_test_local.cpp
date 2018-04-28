@@ -17,6 +17,7 @@ TYPED_TEST_P(net_listener_tests, listen_no_name_selected)
 	EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
 	EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
 	EXPECT_FALSE(listener_->local_endpoint().path().empty());
+	EXPECT_TRUE(listener_->local_endpoint().is_abstract());
 }
 
 REGISTER_TYPED_TEST_CASE_P(

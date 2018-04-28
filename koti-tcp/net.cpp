@@ -113,16 +113,17 @@ tcp6::is_bound(
 	return 0 != local.port();
 }
 
+bool
+local_stream::endpoint::is_abstract() const
+{
+	const auto & p = path();
+	return (false == p.empty() && p[0] == '\0');
+}
+
 local_stream::endpoint
 local_stream::local_endpoint()
 {
-	std::string anonymous_path;
-	anonymous_path.reserve(16);
-	anonymous_path.push_back('\0');
-	anonymous_path += std::to_string(getuid());
-	anonymous_path.push_back('_');
-	anonymous_path += std::to_string(getpid());
-	return endpoint{anonymous_path};
+	return endpoint{};
 }
 
 bool

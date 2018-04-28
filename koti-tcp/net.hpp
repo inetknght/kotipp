@@ -112,7 +112,14 @@ using tcp = tcp6;
 class local_stream : public local::stream_protocol
 {
 public:
-	using endpoint = asio::local::basic_endpoint<local_stream>;
+	class endpoint
+	: public asio::local::basic_endpoint<local_stream>
+	{
+	public:
+		using asio::local::basic_endpoint<local_stream>::basic_endpoint;
+		bool is_abstract() const;
+	};
+
 	using socket = asio::basic_stream_socket<local_stream>;
 	using acceptor = asio::basic_socket_acceptor<local_stream>;
 //	using resolver = asio::ip::basic_resolver<local_stream>;
