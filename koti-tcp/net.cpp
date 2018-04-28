@@ -3,21 +3,28 @@
 namespace koti
 {
 
-tcp4::tcp4()
-	: ip::tcp(ip::tcp::v4())
+tcp46::tcp46(
+	const tcp &ffs
+)	: tcp(ffs)
 {
 }
 
+
 tcp4
-tcp4::v4()
+tcp46::v4()
 {
 	return {};
 }
 
 tcp6
-tcp4::v6()
+tcp46::v6()
 {
 	return {};
+}
+
+tcp4::tcp4()
+	: tcp46(ip::tcp::v4())
+{
 }
 
 tcp4::endpoint
@@ -59,20 +66,8 @@ tcp4::is_bound(
 }
 
 tcp6::tcp6()
-	: ip::tcp(ip::tcp::v6())
+	: tcp46(ip::tcp::v6())
 {
-}
-
-tcp4
-tcp6::v4()
-{
-	return {};
-}
-
-tcp6
-tcp6::v6()
-{
-	return {};
 }
 
 tcp6::endpoint

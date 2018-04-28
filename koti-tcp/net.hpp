@@ -14,8 +14,28 @@ namespace local = boost::asio::local;
 
 using port_number = std::uint16_t;
 
+class tcp4;
 class tcp6;
-class tcp4 : public ip::tcp
+class tcp46
+	: public ip::tcp
+{
+public:
+	using ip::tcp::tcp;
+
+	tcp46(const tcp & ffs);
+
+	static
+	tcp4
+	v4();
+
+	static
+	tcp6
+	v6();
+};
+
+class tcp6;
+class tcp4
+	: public tcp46
 {
 public:
 
@@ -34,15 +54,7 @@ public:
 
 	tcp4();
 
-	static
-	tcp4
-	v4();
-
-	static
-	tcp6
-	v6();
-
-	using tcp::tcp;
+	using tcp46::tcp46;
 
 	static
 	endpoint
@@ -61,7 +73,8 @@ public:
 	);
 };
 
-class tcp6 : public ip::tcp
+class tcp6
+	: public tcp46
 {
 public:
 
@@ -80,15 +93,7 @@ public:
 
 	tcp6();
 
-	static
-	tcp4
-	v4();
-
-	static
-	tcp6
-	v6();
-
-	using tcp::tcp;
+	using tcp46::tcp46;
 
 	static
 	endpoint
@@ -109,7 +114,8 @@ public:
 
 using tcp = tcp6;
 
-class local_stream : public local::stream_protocol
+class local_stream
+	: public local::stream_protocol
 {
 public:
 	class endpoint
