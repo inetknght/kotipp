@@ -65,7 +65,7 @@ class tcp6 : public ip::tcp
 {
 public:
 
-	class endpoint : public asio::ip::basic_endpoint<tcp4>
+	class endpoint : public asio::ip::basic_endpoint<tcp6>
 	{
 	public:
 		using basic_endpoint::basic_endpoint;
