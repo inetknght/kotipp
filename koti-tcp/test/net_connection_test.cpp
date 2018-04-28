@@ -13,11 +13,11 @@ TYPED_TEST_P(net_connection_tests, cannot_bind_acceptor_to_existing_endpoint)
 {
 	auto
 		a = TypeParam::make(this->ios_);
-	
+
 	using protocol = typename TypeParam::protocol_type;
 	using acceptor_type = typename protocol::acceptor;
 
-	auto local = TypeParam::protocol_type::local_endpoint();
+	auto local = protocol::local_endpoint();
 
 	a->open();
 

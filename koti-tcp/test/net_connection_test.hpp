@@ -117,7 +117,6 @@ public:
 };
 TYPED_TEST_CASE_P(net_connection_tests);
 
-//using test_tcp_connection = tcp_connection<net_connection_test_handler>;
 using test_tcp4_connection = tcp4_connection<net_connection_test_handler>;
 using test_tcp6_connection = tcp6_connection<net_connection_test_handler>;
 using test_local_connection = local_connection<net_connection_test_handler>;

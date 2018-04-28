@@ -65,7 +65,7 @@ template <
 	class protocol = tcp,
 	class plexer_handler = null_plexer_handler<protocol>,
 	class connection = connection<protocol, plexer_handler>,
-	class listener = listener<protocol, plexer_handler, connection>
+	class listener = listener<protocol, plexer_handler>
 >
 class plexer
 	: virtual public koti::inheritable_shared_from_this
@@ -84,7 +84,6 @@ public:
 	using logs_type = plexer_logs;
 
 	using pointer = std::shared_ptr<this_type>;
-	using options = typename listener_type::options;
 
 	operator const listener_type & () const
 	{
@@ -107,16 +106,7 @@ public:
 		, logs_type()
 		, plexer_handler_type()
 		, ios_(ios)
-		, listener_options_()
 	{
-	}
-
-	void
-	add_options(
-		koti::options & storage
-	)
-	{
-		listener_options_.add_options(storage);
 	}
 
 	operator bool() const
@@ -178,7 +168,7 @@ public:
 	}
 
 protected:
-	typename listener_type::error_handler_result
+	listener_handler_result
 	on_listener_error()
 	{
 		logs_type::logger()->error(
@@ -187,7 +177,7 @@ protected:
 			listener_type::last_error().second,
 			listener_type::last_error().first.message()
 		);
-		return listener_type::error_handler_result::cancel_and_stop;
+		return listener_handler_result::cancel_and_stop;
 	}
 
 	void
@@ -205,7 +195,6 @@ protected:
 	}
 
 	asio::io_service & ios_;
-	typename listener_type::options listener_options_;
 
 	std::vector<typename connection_type::pointer> connections_;
 	std::vector<typename listener_type::pointer> listeners_;

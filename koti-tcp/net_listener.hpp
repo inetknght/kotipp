@@ -8,13 +8,11 @@ namespace spd = spdlog;
 
 #include "net.hpp"
 
-#include "options.hpp"
-
-#include "net_connection.hpp"
+#include <timestamp.hpp>
 
 namespace koti {
 
-template <class, class, class, class, class>
+template <class, class, class>
 class listener;
 
 class listener_logs {
@@ -40,22 +38,21 @@ protected:
 	}
 };
 
+enum class listener_handler_result
+{
+	cancel_and_stop,
+	ignore_error,
+	ignore_connection
+};
+
 template <
-	class protocol = tcp
+	class protocol
 >
 class listener_handler {
 public:
 	using socket = typename protocol::socket;
 	using acceptor = typename protocol::acceptor;
 	using endpoint = typename protocol::endpoint;
-	using connection_handler = null_connection_handler;
-
-	enum class [[nodiscard]] error_handler_result
-	{
-		cancel_and_stop,
-		ignore_error,
-		ignore_connection
-	};
 
 	void
 	on_new_socket(
@@ -63,23 +60,20 @@ public:
 		const endpoint & remote_endpoint
 	);
 
-	error_handler_result
+	listener_handler_result
 	on_listener_error(
 		const boost::system::error_code & ec,
 		const std::string & msg
 	);
 };
 
-template <
-	class protocol = tcp
->
+template <class header_only = void>
 std::ostream & operator<<(
 	std::ostream & o,
-	const typename listener_handler<protocol>::error_handler_result & v
+	const listener_handler_result & v
 )
 {
-	using handler_type = listener_handler<protocol>;
-	using e = typename handler_type::error_handler_result;
+	using e = listener_handler_result;
 
 	switch (v)
 	{
@@ -104,8 +98,6 @@ public:
 	using acceptor = typename protocol::acceptor;
 	using endpoint = typename protocol::endpoint;
 	using handler_type = listener_handler<protocol>;
-	using error_handler_result = typename handler_type::error_handler_result;
-	using connection_handler = null_connection_handler;
 
 	void
 	on_new_socket(
@@ -116,170 +108,43 @@ public:
 		s.close();
 	}
 
-	error_handler_result
+	listener_handler_result
 	on_listener_error(
 		const boost::system::error_code &,
 		const std::string &
 	)
 	{
-		return error_handler_result::ignore_error;
+		return listener_handler_result::ignore_error;
 	}
 };
 
 template <
-	class protocol = tcp
->
-class listener_options
-	: virtual private koti::listener_logs
-	, public koti::options::configurator
-{
-public:
-	using validate = koti::options::validate;
-	using address_string = std::string;
-
-	listener_options() = default;
-	listener_options(const listener_options & copy_ctor) = default;
-	listener_options(listener_options && move_ctor) = default;
-	listener_options & operator=(const listener_options & copy_assign) = default;
-	listener_options & operator=(listener_options && move_assign) = default;
-	virtual ~listener_options() = default;
-
-	listener_options(
-		ip::address listen_address,
-		port_number listen_port = 0
-	)
-		: configurator()
-		, address_(listen_address.to_string())
-		, port_(listen_port)
-	{
-	}
-
-	koti::options::validate
-	validate_configuration(koti::options &) override
-	{
-		auto error = [&](const auto & e)
-		{
-			listener_logs::logger()->error(
-				"exception caught\t"
-				"when attempting to convert \"{}\" to an IP address\t"
-				"Did you give a hostname instead?\t"
-				"{}"
-				, address_
-				, e.what()
-			);
-			return validate::reject;
-		};
-
-		try
-		{
-			ip::address::from_string(address_);
-		}
-		catch (const boost::system::system_error & e)
-		{
-			return error(e);
-		}
-		catch (const std::exception & e)
-		{
-			return error(e);
-		}
-
-		return validate::ok;
-	}
-
-	void
-	add_options(koti::options & storage) override
-	{
-		storage
-		.add(*this)
-		;
-	
-		storage
-		.get_commandline()
-		().add_options()
-		("listen-address,a", po::value<decltype(address_)>(&address_)->required(), "address on which to bind and listen")
-		("listen-port,p", po::value<decltype(port_)>(&port_)->required(), "port number on which to bind and listen")
-		;
-	}
-
-	ip::address address() const
-	{
-		return ip::address::from_string(address_);
-	}
-
-	ip::address address(boost::system::error_code & ec) const
-	{
-		return ip::address::from_string(address_, ec);
-	}
-
-	const address_string & address_str() const
-	{
-		return address_;
-	}
-
-	void address_str(address_string && new_address)
-	{
-		address_ = std::move(new_address);
-	}
-
-	port_number & port()
-	{
-		return port_;
-	}
-
-	const port_number & port() const
-	{
-		return port_;
-	}
-
-	typename protocol::endpoint build() const
-	{
-		return typename protocol::endpoint{address(), port()};
-	}
-
-protected:
-	// options class is specifically for user input. therefore, std::string
-	// because ip::address doesn't seem to play nicely with program_options
-	// (as of this time)
-	// this isn't as efficient as ip::address, but it's less complex than
-	// supporting user input *into* native representation, and I am not yet
-	// prepared to learn that route.
-	address_string address_;
-	port_number port_ = 0;
-};
-
-template <
-	class protocol = tcp,
+	class protocol,
 	class listener_handler = null_listener_handler<protocol>,
-	class connection = connection<protocol, typename listener_handler::connection_handler>,
-	class time_source = std::chrono::steady_clock,
-	class Options = listener_options<protocol>
+	class time_source = std::chrono::steady_clock
 >
 class listener
 	: virtual public koti::inheritable_shared_from_this
 	, virtual public listener_logs
 	, public listener_handler
-	, public Options
+	// TODO: timestamping belongs in the handler
 	, private kotipp::timestamp<time_source>
 	, private protocol::acceptor
 {
 public:
 	using this_type = listener;
 
+	using protocol_type = protocol;
 	using pointer = std::shared_ptr<this_type>;
 	using socket = typename protocol::socket;
 	using acceptor = typename protocol::acceptor;
 	using endpoint = typename protocol::endpoint;
 	using logs_type = listener_logs;
 	using listener_handler_type = listener_handler;
-	using connection_type = connection;
-
-	using error_handler_result = typename listener_handler_type::error_handler_result;
 
 	using time_source_type = time_source;
 	using time_point = typename time_source::time_point;
 	using time_duration = typename time_point::duration;
-
-	using options = Options;
 
 	// .first is the error code
 	// .second is the message, if any
@@ -297,7 +162,7 @@ public:
 
 	static pointer make(
 		boost::asio::io_service & ios,
-		tcp::endpoint endpoint
+		endpoint endpoint
 	)
 	{
 		return koti::protected_make_shared_enabler<this_type>(ios, endpoint);
@@ -360,6 +225,7 @@ public:
 		return true;
 	}
 
+	using acceptor::bind;
 	bool
 	bind(
 		endpoint at = protocol::local_endpoint()
@@ -399,7 +265,7 @@ public:
 			return false;
 		}
 
-		local_endpoint_ = local_endpoint();
+		local_endpoint_ = acceptor::local_endpoint();
 		if ( last_ec_.first )
 		{
 			last_ec_.second = fmt::format(
@@ -418,9 +284,6 @@ public:
 		return true;
 	}
 
-	template <
-		class ... Args
-	>
 	bool
 	listen()
 	{
@@ -430,7 +293,8 @@ public:
 		}
 
 		last_ec_ = {};
-		if ( false == bind() )
+		acceptor::bind(protocol_type::local_endpoint(), last_ec_.first);
+		if ( last_ec_.first )
 		{
 			listener_logs::logger()->debug(
 				"listen()::bind()"
@@ -474,7 +338,7 @@ public:
 		}
 
 		last_ec_ = {};
-		local_endpoint_  = acceptor::local_endpoint(last_ec_.first);
+		auto at = acceptor::local_endpoint(last_ec_.first);
 		if ( last_ec_.first )
 		{
 			last_ec_.second = "is_bound()::local_endpoint()";
@@ -482,7 +346,7 @@ public:
 			return false;
 		}
 
-		return 0 != local_endpoint_.port();
+		return at != protocol_type::local_endpoint();
 	}
 
 	bool
@@ -535,16 +399,16 @@ public:
 		if(ec)
 		{
 			auto result = fail(ec, "accept()");
-			if ( error_handler_result::cancel_and_stop == result )
+			if ( listener_handler_result::cancel_and_stop == result )
 			{
 				acceptor::close();
 				return;
 			}
-			if ( error_handler_result::ignore_connection == result )
+			if ( listener_handler_result::ignore_connection == result )
 			{
 				return;
 			}
-			assert(error_handler_result::ignore_error == result);
+			assert(listener_handler_result::ignore_error == result);
 		}
 
 		endpoint remote = socket_.remote_endpoint(
@@ -641,7 +505,6 @@ protected:
 		: koti::inheritable_shared_from_this()
 		, logs_type()
 		, listener_handler()
-		, options()
 		, kotipp::timestamp<time_source>()
 		, acceptor(ios)
 		, ios_(ios)
@@ -652,12 +515,11 @@ protected:
 
 	listener(
 		asio::io_service & ios,
-		tcp::endpoint desired_local_endpoint
+		endpoint desired_local_endpoint
 	)
 		: koti::inheritable_shared_from_this()
 		, logs_type()
 		, listener_handler()
-		, options()
 		, kotipp::timestamp<time_source>()
 		, acceptor(ios)
 		, ios_(ios)
@@ -678,7 +540,7 @@ protected:
 		}
 
 		// Bind to the server address.
-		bind(desired_local_endpoint);
+		acceptor::bind(desired_local_endpoint, last_ec_.first);
 		if ( last_ec_.first )
 		{
 			ignore_failure(last_ec_.first, "bind");
@@ -698,7 +560,7 @@ protected:
 	ignore_failure(boost::system::error_code ec, std::string msg)
 	{
 		auto result = fail(ec, msg);
-		if ( error_handler_result::ignore_error != result )
+		if ( listener_handler_result::ignore_error != result )
 		{
 			logs_type::logger()->debug("ignoring failure instructions\t{}\t{}\t{}", result, ec.message(), msg);
 		}
@@ -712,9 +574,9 @@ protected:
 	}
 
 	void
-	ignore_failure(error_handler_result result)
+	ignore_failure(listener_handler_result result)
 	{
-		if ( error_handler_result::ignore_error != result )
+		if ( listener_handler_result::ignore_error != result )
 		{
 			logs_type::logger()->debug(
 				"ignoring failure instructions\t{}\t{}\t{}",
@@ -725,24 +587,24 @@ protected:
 		}
 	}
 
-	error_handler_result
+	listener_handler_result
 	fail(boost::system::error_code ec, std::string msg)
 	{
 		last_ec_.first = std::move(ec);
 		return fail(std::move(msg));
 	}
 
-	error_handler_result
+	listener_handler_result
 	fail(std::string msg)
 	{
 		last_ec_.second = std::move(msg);
 		return fail();
 	}
 
-	error_handler_result
+	listener_handler_result
 	fail()
 	{
-		error_handler_result result = error_handler_result::cancel_and_stop;
+		listener_handler_result result = listener_handler_result::cancel_and_stop;
 
 		// todo: defer logging until we have a result,
 		// try/catch around error_handler_
@@ -783,6 +645,9 @@ private:
 	asio::io_service & ios_;
 	socket socket_;
 	error_descriptor last_ec_;
+
+	// local_endpoint_ could be different from acceptor::local_endpoint()
+	// because, eg, tcp protocol might have auto-selected a port if we bound 0
 	endpoint local_endpoint_;
 };
 

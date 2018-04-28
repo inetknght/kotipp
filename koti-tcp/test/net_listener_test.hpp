@@ -6,32 +6,23 @@
 
 namespace koti {
 
-class tcp_listener_test_handler;
-class tcp_listener_test_handler
+template <class>
+class net_listener_test_handler;
+
+template <class protocol>
+class net_listener_test_handler
 	: virtual private listener_logs
 	, public net_connection_test_handler
-	, private null_listener_handler<tcp>
+	, private null_listener_handler<protocol>
 {
 public:
-	using protocol_type = tcp;
-	using socket_type = tcp::socket;
-	using acceptor_type = tcp::acceptor;
-	using endpoint_type = typename acceptor_type::endpoint_type;
-	using connection_handler = null_connection_handler;
-	using connection_type = koti::connection<protocol_type, connection_handler>;
+	using protocol_type = protocol;
+	using listener_type = listener<protocol, net_listener_test_handler<protocol>>;
+	using socket = typename protocol_type::socket;
+	using endpoint = typename protocol_type::endpoint;
 	using time_source = std::chrono::steady_clock;
-	using listener_options = koti::listener_options<protocol_type>;
 
-	using listener_type = koti::listener<
-		tcp,
-		tcp_listener_test_handler,
-		connection_type,
-		time_source,
-		listener_options
-	>;
-
-	using handler_type = listener_handler<protocol_type>;
-	using error_handler_result = typename handler_type::error_handler_result;
+	using handler_type = null_listener_handler<protocol_type>;
 
 	bool had_new_socket_ = false;
 	bool had_listener_error_ = false;
@@ -39,19 +30,19 @@ public:
 
 	void
 	on_new_socket(
-		socket_type && s,
-		const endpoint_type & remote_endpoint
+		socket && s,
+		const endpoint & remote_endpoint
 	)
 	{
 		had_new_socket_ = true;
 		listener_logs::logger()->info(
-			"tcp_listener_test_handler::on_new_socket\t{}",
+			"net_listener_test_handler::on_new_socket\t{}",
 			remote_endpoint
 		);
 		accepted_sockets_.push_back(std::move(s));
 	}
 
-	error_handler_result
+	listener_handler_result
 	on_listener_error(
 		const boost::system::error_code & ec,
 		const std::string & msg
@@ -60,61 +51,80 @@ public:
 		had_listener_error_ = true;
 		last_listener_error_ = ec;
 		listener_logs::logger()->info(
-			"tcp_listener_test_handler::on_listener_error\t{}\t{}",
+			"net_listener_test_handler::on_listener_error\t{}\t{}",
 			msg,
 			ec.message()
 		);
-		return error_handler_result::cancel_and_stop;
+		return listener_handler_result::cancel_and_stop;
 	}
 
-	std::vector<socket_type> accepted_sockets_;
+	std::vector<socket> accepted_sockets_;
 };
 
-class tcp_listener_tests
+template <class listener>
+class net_listener_tests
 	: public testing::Test
-	, public tcp_listener_test_handler
+	, public net_listener_test_handler<typename listener::protocol_type>
 {
 public:
-	using connection_handler = tcp_listener_test_handler;
-	using listener_handler = tcp_listener_test_handler;
-	using connection_type = tcp_listener_test_handler::connection_type;
-	using time_source = tcp_listener_test_handler::time_source;
-	using listener_options = tcp_listener_test_handler::listener_options;
-	using listener_type = tcp_listener_test_handler::listener_type;
+	using listener_type = listener;
+	using protocol_type = typename listener::protocol_type;
+	using socket = typename protocol_type::socket;
+	using endpoint = typename protocol_type::endpoint;
+	using listener_handler = net_listener_test_handler<protocol_type>;
+	using time_source = typename  listener_handler::time_source;
 
-	tcp_listener_tests(
+	net_listener_tests(
 	)
 		: testing::Test()
 	{
 	}
 
-	virtual ~tcp_listener_tests()
+	virtual ~net_listener_tests()
 	{
 	}
 
-	typename listener_type::pointer & remake(
+	typename listener::pointer & remake(
 	)
 	{
-		return listener_ = listener_type::make(
+		return listener_ = listener::make(
 			ios_
 		);
 	}
 
-	typename listener_type::pointer & remake(
-		const listener_type::options & listener_options
+	typename listener::pointer & remake(
+		const endpoint & bind_to
 	)
 	{
-		return listener_ = listener_type::make(
+		return listener_ = listener::make(
 			ios_,
-			listener_options.build()
+			bind_to
 		);
 	}
 
 	asio::io_service ios_;
-	typename listener_type::pointer listener_;
-	typename listener_type::options listener_options_;
+	typename listener::pointer listener_;
 
-	std::vector<koti::tcp::socket> accepted_sockets_;
+	std::vector<socket> accepted_sockets_;
 };
+TYPED_TEST_CASE_P(net_listener_tests);
+
+using test_tcp4_listener = tcp4_listener<net_listener_test_handler<tcp4>>;
+using test_tcp6_listener = tcp6_listener<net_listener_test_handler<tcp6>>;
+using test_local_listener = local_listener<net_listener_test_handler<local_stream>>;
+using net_listener_all_tests = ::testing::Types<
+//	test_tcp4_listener,
+//	test_tcp6_listener,
+	test_local_listener
+>;
+
+//using net_listener_tcp_tests = ::testing::Types<
+//	test_tcp4_listener,
+//	test_tcp6_listener
+//>;
+
+//using net_listener_local_tests = ::testing::Types<
+//	test_local_listener
+//>;
 
 } // namespace koti

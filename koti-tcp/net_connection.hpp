@@ -14,13 +14,15 @@ namespace koti {
 template <class, class>
 class connection;
 
+enum class connection_action {
+	disconnect,
+	abort,
+	normal
+};
+
 class connection_handler {
 public:
-	enum class [[nodiscard]] action {
-		disconnect,
-		abort,
-		normal
-	};
+	using action = connection_action;
 
 	action
 	on_connected(const boost::system::error_code &);
@@ -78,7 +80,7 @@ public:
 class buffered_read_connection_handler
 {
 public:
-	using action = typename null_connection_handler::action;
+	using action = connection_action;
 	using buffer_type = std::vector<char>;
 
 	buffer_type &
@@ -120,7 +122,7 @@ protected:
 class buffered_write_connection_handler
 {
 public:
-	using action = typename null_connection_handler::action;
+	using action = connection_action;
 	using buffer_type = std::vector<char>;
 
 	buffer_type &
@@ -164,7 +166,7 @@ class connection_timer_handler
 : private kotipp::timestamp<TimeSource>
 {
 public:
-	using action = typename null_connection_handler::action;
+	using action = connection_action;
 	using time_source = TimeSource;
 	using time_point = typename time_source::time_point;
 	using time_duration = typename time_point::duration;
@@ -207,7 +209,7 @@ public:
 
 	using pointer = std::shared_ptr<this_type>;
 
-	using action = typename connection_handler_type::action;
+	using action = connection_action;
 
 	connection(const connection & copy_ctor) = delete;
 	connection(connection && move_ctor) = default;
