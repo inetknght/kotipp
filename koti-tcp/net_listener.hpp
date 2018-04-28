@@ -225,7 +225,6 @@ public:
 		return true;
 	}
 
-	using acceptor::bind;
 	bool
 	bind(
 		endpoint at = protocol::local_endpoint()
@@ -287,14 +286,17 @@ public:
 	bool
 	listen()
 	{
+		if ( false == is_open() )
+		{
+			open();
+		}
+
 		if ( is_listening() )
 		{
 			return true;
 		}
 
-		last_ec_ = {};
-		acceptor::bind(protocol_type::local_endpoint(), last_ec_.first);
-		if ( last_ec_.first )
+		if ( false == this_type::bind(protocol_type::local_endpoint()) )
 		{
 			listener_logs::logger()->debug(
 				"listen()::bind()"
@@ -323,11 +325,7 @@ public:
 		acceptor::close();
 	}
 
-	bool
-	is_open() const
-	{
-		return acceptor::is_open();
-	}
+	using acceptor::is_open;
 
 	bool
 	is_bound()
@@ -337,16 +335,7 @@ public:
 			return false;
 		}
 
-		last_ec_ = {};
-		auto at = acceptor::local_endpoint(last_ec_.first);
-		if ( last_ec_.first )
-		{
-			last_ec_.second = "is_bound()::local_endpoint()";
-			log_error();
-			return false;
-		}
-
-		return at != protocol_type::local_endpoint();
+		return protocol::is_bound(static_cast<acceptor&>(*this));
 	}
 
 	bool

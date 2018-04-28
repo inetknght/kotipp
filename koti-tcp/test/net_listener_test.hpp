@@ -113,18 +113,18 @@ using test_tcp4_listener = tcp4_listener<net_listener_test_handler<tcp4>>;
 using test_tcp6_listener = tcp6_listener<net_listener_test_handler<tcp6>>;
 using test_local_listener = local_listener<net_listener_test_handler<local_stream>>;
 using net_listener_all_tests = ::testing::Types<
-//	test_tcp4_listener,
-//	test_tcp6_listener,
+	test_tcp4_listener,
+	test_tcp6_listener,
 	test_local_listener
 >;
 
-//using net_listener_tcp_tests = ::testing::Types<
-//	test_tcp4_listener,
-//	test_tcp6_listener
-//>;
+using net_listener_tcp_tests = ::testing::Types<
+	test_tcp4_listener,
+	test_tcp6_listener
+>;
 
-//using net_listener_local_tests = ::testing::Types<
-//	test_local_listener
-//>;
+using net_listener_local_tests = ::testing::Types<
+	test_local_listener
+>;
 
 } // namespace koti

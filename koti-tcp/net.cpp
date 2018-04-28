@@ -28,6 +28,36 @@ tcp4::local_endpoint()
 	return local;
 }
 
+bool
+tcp4::is_bound(
+	const socket & s
+)
+{
+	boost::system::error_code ec;
+	auto local = s.local_endpoint(ec);
+	if ( ec )
+	{
+		return false;
+	}
+
+	return 0 != local.port();
+}
+
+bool
+tcp4::is_bound(
+	const acceptor & s
+)
+{
+	boost::system::error_code ec;
+	auto local = s.local_endpoint(ec);
+	if ( ec )
+	{
+		return false;
+	}
+
+	return 0 != local.port();
+}
+
 tcp6::tcp6()
 	: ip::tcp(ip::tcp::v6())
 {
@@ -53,6 +83,36 @@ tcp6::local_endpoint()
 	return local;
 }
 
+bool
+tcp6::is_bound(
+	const socket & s
+)
+{
+	boost::system::error_code ec;
+	auto local = s.local_endpoint(ec);
+	if ( ec )
+	{
+		return false;
+	}
+
+	return 0 != local.port();
+}
+
+bool
+tcp6::is_bound(
+	const acceptor & s
+)
+{
+	boost::system::error_code ec;
+	auto local = s.local_endpoint(ec);
+	if ( ec )
+	{
+		return false;
+	}
+
+	return 0 != local.port();
+}
+
 local_stream::endpoint
 local_stream::local_endpoint()
 {
@@ -63,6 +123,36 @@ local_stream::local_endpoint()
 	anonymous_path.push_back('_');
 	anonymous_path += std::to_string(getpid());
 	return endpoint{anonymous_path};
+}
+
+bool
+local_stream::is_bound(
+	const socket & s
+)
+{
+	boost::system::error_code ec;
+	auto local = s.local_endpoint(ec);
+	if ( ec )
+	{
+		return false;
+	}
+
+	return false == local.path().empty();
+}
+
+bool
+local_stream::is_bound(
+	const acceptor & s
+)
+{
+	boost::system::error_code ec;
+	auto local = s.local_endpoint(ec);
+	if ( ec )
+	{
+		return false;
+	}
+
+	return false == local.path().empty();
 }
 
 } // namespace koti

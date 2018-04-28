@@ -47,6 +47,18 @@ public:
 	static
 	endpoint
 	local_endpoint();
+
+	static
+	bool
+	is_bound(
+		const socket & s
+	);
+
+	static
+	bool
+	is_bound(
+		const acceptor & s
+	);
 };
 
 class tcp6 : public ip::tcp
@@ -81,6 +93,18 @@ public:
 	static
 	endpoint
 	local_endpoint();
+
+	static
+	bool
+	is_bound(
+		const socket & s
+	);
+
+	static
+	bool
+	is_bound(
+		const acceptor & s
+	);
 };
 
 using tcp = tcp6;
@@ -97,6 +121,18 @@ public:
 	static
 	endpoint
 	local_endpoint();
+
+	static
+	bool
+	is_bound(
+		const socket & s
+	);
+
+	static
+	bool
+	is_bound(
+		const acceptor & s
+	);
 };
 
 // https://stackoverflow.com/a/32172486/1111557
