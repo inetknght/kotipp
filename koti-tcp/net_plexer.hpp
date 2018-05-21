@@ -9,6 +9,8 @@ namespace spd = spdlog;
 #include <numeric>
 #include <vector>
 
+#include "net.hpp"
+
 #include "net_listener.hpp"
 #include "net_connection.hpp"
 
@@ -168,7 +170,7 @@ public:
 	}
 
 protected:
-	listener_handler_result
+	listener_action
 	on_listener_error()
 	{
 		logs_type::logger()->error(
@@ -177,7 +179,7 @@ protected:
 			listener_type::last_error().second,
 			listener_type::last_error().first.message()
 		);
-		return listener_handler_result::cancel_and_stop;
+		return listener_action::cancel_and_stop;
 	}
 
 	void

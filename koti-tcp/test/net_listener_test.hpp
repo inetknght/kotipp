@@ -9,57 +9,109 @@ namespace koti {
 template <class>
 class net_listener_test_handler;
 
-template <class protocol>
+template <class Protocol>
 class net_listener_test_handler
-	: virtual private listener_logs
-	, public net_connection_test_handler
-	, private null_listener_handler<protocol>
+	: public net_connection_test_handler
+	//, private simple_listener_logging_handler<net_listener_test_handler>
 {
 public:
-	using protocol_type = protocol;
-	using listener_type = listener<protocol, net_listener_test_handler<protocol>>;
-	using socket = typename protocol_type::socket;
-	using endpoint = typename protocol_type::endpoint;
+	using protocol = Protocol;
+	using listener = koti::listener<protocol, net_listener_test_handler<protocol>>;
+	using socket = typename protocol::socket;
+	using endpoint = typename protocol::endpoint;
 	using time_source = std::chrono::steady_clock;
 
-	using handler_type = null_listener_handler<protocol_type>;
+	using logger = simple_listener_logging_handler<net_listener_test_handler>;
 
 	bool had_new_socket_ = false;
 	bool had_listener_error_ = false;
 	boost::system::error_code last_listener_error_;
 
-	void
-	on_new_socket(
-		socket && s,
-		const endpoint & remote_endpoint
-	)
-	{
-		had_new_socket_ = true;
-		listener_logs::logger()->info(
-			"net_listener_test_handler::on_new_socket\t{}",
-			remote_endpoint
-		);
-		accepted_sockets_.push_back(std::move(s));
-	}
+	listener_action
+	on_listener_bound(
+	);
 
-	listener_handler_result
+	listener_action
+	on_listener_listening(
+	);
+
+	listener_action
+	on_new_socket(
+		socket && s
+	);
+
+	void
+	on_listener_closed(
+	);
+
+	listener_action
 	on_listener_error(
 		const boost::system::error_code & ec,
 		const std::string & msg
-	)
-	{
-		had_listener_error_ = true;
-		last_listener_error_ = ec;
-		listener_logs::logger()->info(
-			"net_listener_test_handler::on_listener_error\t{}\t{}",
-			msg,
-			ec.message()
-		);
-		return listener_handler_result::cancel_and_stop;
-	}
+	);
 
 	std::vector<socket> accepted_sockets_;
+
+	auto
+	local_endpoint()
+	{
+		return static_cast<listener*>(this)->local_endpoint();
+	}
+
+private:
+	friend class simple_listener_logging_handler<net_listener_test_handler>;
 };
+
+template <class Protocol>
+listener_action
+net_listener_test_handler<Protocol>::on_listener_bound(
+)
+{
+	return listener_action::normal;
+//	return static_cast<logger&>(*this).on_listener_bound();
+}
+
+template <class Protocol>
+listener_action
+net_listener_test_handler<Protocol>::on_listener_listening(
+)
+{
+	return listener_action::normal;
+//	return static_cast<logger&>(*this).on_listener_listening();
+}
+
+template <class Protocol>
+listener_action
+net_listener_test_handler<Protocol>::on_new_socket(
+	socket && s
+)
+{
+//	static_cast<logger&>(*this).on_new_socket(s);
+	had_new_socket_ = true;
+	accepted_sockets_.push_back(std::move(s));
+	return listener_action::normal;
+}
+
+template <class Protocol>
+void
+net_listener_test_handler<Protocol>::on_listener_closed(
+)
+{
+//	return static_cast<logger&>(*this).on_listener_closed();
+}
+
+template <class Protocol>
+listener_action
+net_listener_test_handler<Protocol>::on_listener_error(
+	const boost::system::error_code & ec,
+	const std::string & msg
+)
+{
+//	static_cast<logger&>(*this).on_listener_error(ec, msg);
+	had_listener_error_ = true;
+	last_listener_error_ = ec;
+	return listener_action::cancel_and_stop;
+}
 
 template <class listener>
 class net_listener_tests
@@ -109,9 +161,13 @@ public:
 };
 TYPED_TEST_CASE_P(net_listener_tests);
 
-using test_tcp4_listener = tcp4_listener<net_listener_test_handler<tcp4>>;
-using test_tcp6_listener = tcp6_listener<net_listener_test_handler<tcp6>>;
-using test_local_listener = local_listener<net_listener_test_handler<local_stream>>;
+using tcp4_test_listener_handler = net_listener_test_handler<tcp4>;
+using tcp6_test_listener_handler = net_listener_test_handler<tcp6>;
+using local_stream_test_listener_handler = net_listener_test_handler<local_stream>;
+
+using test_tcp4_listener = tcp4_listener<tcp4_test_listener_handler>;
+using test_tcp6_listener = tcp6_listener<tcp6_test_listener_handler>;
+using test_local_listener = local_listener<local_stream_test_listener_handler>;
 using net_listener_all_tests = ::testing::Types<
 	test_tcp4_listener,
 	test_tcp6_listener,

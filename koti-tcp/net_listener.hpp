@@ -38,11 +38,11 @@ protected:
 	}
 };
 
-enum class listener_handler_result
+enum class listener_action
 {
 	cancel_and_stop,
-	ignore_error,
-	ignore_connection
+	normal,
+	reject_connection
 };
 
 template <
@@ -54,35 +54,44 @@ public:
 	using acceptor = typename protocol::acceptor;
 	using endpoint = typename protocol::endpoint;
 
-	void
-	on_new_socket(
-		socket && s,
-		const endpoint & remote_endpoint
+	listener_action
+	on_listener_bound(
 	);
 
-	listener_handler_result
+	listener_action
+	on_listener_listening(
+	);
+
+	listener_action
+	on_new_socket(
+		socket &&
+	);
+
+	void
+	on_listener_closed(
+	);
+
+	listener_action
 	on_listener_error(
 		const boost::system::error_code & ec,
-		const std::string & msg
+		const std::string & listener_message
 	);
 };
 
 template <class header_only = void>
 std::ostream & operator<<(
 	std::ostream & o,
-	const listener_handler_result & v
+	const listener_action & v
 )
 {
-	using e = listener_handler_result;
+	using e = listener_action;
 
 	switch (v)
 	{
 	case e::cancel_and_stop:
 		o << "cancel_and_stop"; break;
-	case e::ignore_error:
-		o << "ignore_error"; break;
-	case e::ignore_connection:
-		o << "ignore_connection"; break;
+	case e::normal:
+		o << "normal"; break;
 	}
 
 	return o;
@@ -98,23 +107,109 @@ public:
 	using acceptor = typename protocol::acceptor;
 	using endpoint = typename protocol::endpoint;
 	using handler_type = listener_handler<protocol>;
+	
+	listener_action
+	on_listener_bound(
+	)
+	{
+		return listener_action::normal;
+	}
 
-	void
+	listener_action
+	on_listener_listening(
+	)
+	{
+		return listener_action::normal;
+	}
+
+	listener_action
 	on_new_socket(
-		socket && s,
-		const endpoint &
+		socket && s
 	)
 	{
 		s.close();
+		return listener_action::normal;
 	}
 
-	listener_handler_result
+	void
+	on_listener_closed(
+	)
+	{
+	}
+
+	listener_action
 	on_listener_error(
-		const boost::system::error_code &,
 		const std::string &
 	)
 	{
-		return listener_handler_result::ignore_error;
+		return listener_action::normal;
+	}
+};
+
+template <
+	class logged_handler
+>
+class simple_listener_logging_handler
+	: public listener_logs
+{
+public:
+	listener_action
+	on_listener_bound(
+	)
+	{
+		listener_logs::logger()->info(
+			"bind()	{}",
+			static_cast<typename logged_handler::protocol::acceptor&>(*this).local_endpoint()
+		);
+		return listener_action::normal;
+	}
+
+	listener_action
+	on_listener_listening(
+	)
+	{
+		listener_logs::logger()->info(
+			"listen()	{}",
+			static_cast<typename logged_handler::protocol::acceptor&>(*this).local_endpoint()
+		);
+		return listener_action::normal;
+	}
+
+	listener_action
+	on_new_socket(
+		typename logged_handler::protocol::socket && s
+	)
+	{
+		const auto & remote_endpoint = s.remote_endpoint();
+		listener_logs::logger()->info(
+			"{}:	incoming:	{}",
+			static_cast<typename logged_handler::protocol::acceptor&>(*this).local_endpoint(),
+			remote_endpoint
+		);
+		return listener_action::normal;
+	}
+
+	void
+	on_listener_closed(
+	)
+	{
+		listener_logs::logger()->info(
+			"listener closed"
+		);
+	}
+
+	listener_action
+	on_listener_error(
+		const boost::system::error_code & ec,
+		const std::string & listener_message
+	)
+	{
+		listener_logs::logger()->error(
+			"listener error:{}	{}",
+			listener_message,
+			ec
+		);
+		return listener_action::normal;
 	}
 };
 
@@ -125,7 +220,6 @@ template <
 >
 class listener
 	: virtual public koti::inheritable_shared_from_this
-	, virtual public listener_logs
 	, public listener_handler
 	// TODO: timestamping belongs in the handler
 	, private kotipp::timestamp<time_source>
@@ -211,14 +305,12 @@ public:
 
 		last_ec_ = {};
 		acceptor::open(protocol{}, last_ec_.first);
-		listener_logs::logger()->debug(
-			"open():{}",
-			last_ec_.first
-		);
 		if ( last_ec_.first )
 		{
-			last_ec_.second = "open()";
-			log_error();
+			static_cast<listener_handler&>(*this).on_listener_error(
+				last_ec_.first,
+				last_ec_.second = fmt::format("open():{}", last_ec_.first)
+			);
 			return false;
 		}
 
@@ -236,12 +328,9 @@ public:
 		}
 
 		last_ec_ = {};
-		if ( false == open() )
+		if ( false == this_type::open() )
 		{
-			listener_logs::logger()->debug(
-				"bind({})::open()",
-				at
-			);
+			// open() shall have already called on_listener_error()
 			return false;
 		}
 
@@ -249,58 +338,54 @@ public:
 			at,
 			last_ec_.first
 		);
-		listener_logs::logger()->debug(
-			"bind({}):{}",
-			at,
-			last_ec_.first
-		);
 		if ( last_ec_.first )
 		{
-			last_ec_.second = fmt::format(
-				"bind({})::bind()",
-				at
+			static_cast<listener_handler&>(*this).on_listener_error(
+				last_ec_.first,
+				last_ec_.second = fmt::format(
+					"bind({})::bind():{}",
+					at,
+					last_ec_.first
+				)
 			);
-			log_error();
 			return false;
 		}
 
 		local_endpoint_ = acceptor::local_endpoint();
 		if ( last_ec_.first )
 		{
-			last_ec_.second = fmt::format(
-				"bind({})::local_endpoint()",
-				local_endpoint_
-			);
-			log_error();
 			acceptor::close();
+			static_cast<listener_handler&>(*this).on_listener_error(
+				last_ec_.first,
+				last_ec_.second = fmt::format(
+					"bind({})::local_endpoint():{}",
+					local_endpoint_,
+					last_ec_.first
+				)
+			);
 			return false;
 		}
 
-		listener_logs::logger()->info(
-			"listener bound to\t{}",
-			local_endpoint_
-		);
+		auto handler_says = static_cast<listener_handler&>(*this).on_listener_bound();
+		if ( listener_action::cancel_and_stop == handler_says )
+		{
+			this_type::stop();
+			return false;
+		}
 		return true;
 	}
 
 	bool
-	listen()
+	listen(endpoint at_addr = protocol_type::local_endpoint())
 	{
-		if ( false == is_open() )
-		{
-			open();
-		}
-
 		if ( is_listening() )
 		{
 			return true;
 		}
 
-		if ( false == this_type::bind(protocol_type::local_endpoint()) )
+		if ( false == this_type::bind(at_addr) )
 		{
-			listener_logs::logger()->debug(
-				"listen()::bind()"
-			);
+			// bind() shall have already called on_listener_error
 			return false;
 		}
 
@@ -310,12 +395,21 @@ public:
 		);
 		if ( last_ec_.first )
 		{
-			last_ec_.second = "listen()::listen()";
-			log_error();
+			static_cast<listener_handler&>(*this).on_listener_error(
+				last_ec_.first,
+				last_ec_.second = "listen()::listen()"
+			);
 			return false;
 		}
 
 		do_accept();
+
+		auto handler_says = static_cast<listener_handler&>(*this).on_listener_listening();
+		if ( listener_action::cancel_and_stop == handler_says )
+		{
+			this_type::stop();
+			return false;
+		}
 		return true;
 	}
 
@@ -323,6 +417,7 @@ public:
 	stop()
 	{
 		acceptor::close();
+		static_cast<listener_handler&>(*this).on_listener_closed();
 	}
 
 	using acceptor::is_open;
@@ -351,8 +446,10 @@ public:
 		acceptor::get_option(option, last_ec_.first);
 		if ( last_ec_.first )
 		{
-			last_ec_.second = "is_listening()";
-			log_error();
+			static_cast<listener_handler&>(*this).on_listener_error(
+				last_ec_.first,
+				last_ec_.second = "is_listening()"
+			);
 			return false;
 		}
 
@@ -382,66 +479,28 @@ public:
 	}
 
 	void
-	on_accept(const boost::system::error_code & ec)
+	on_accept(
+		const boost::system::error_code & ec
+	)
 	try
 	{
 		if(ec)
 		{
-			auto result = fail(ec, "accept()");
-			if ( listener_handler_result::cancel_and_stop == result )
+			auto result = static_cast<listener_handler&>(*this).on_listener_error(
+				last_ec_.first = ec,
+				last_ec_.second = "accept()"
+			);
+			if ( listener_action::cancel_and_stop == result )
 			{
 				acceptor::close();
 				return;
 			}
-			if ( listener_handler_result::ignore_connection == result )
-			{
-				return;
-			}
-			assert(listener_handler_result::ignore_error == result);
 		}
 
-		endpoint remote = socket_.remote_endpoint(
-			last_ec_.first
-		);
-		if ( last_ec_.first )
+		auto result = static_cast<listener_handler&>(*this).on_new_socket(std::move(socket_));
+		if ( listener_action::reject_connection == result )
 		{
-			last_ec_.second = fmt::format(
-				"on_accept({})::remote_endpoint()",
-				remote
-			);
-			log_error();
-		}
-
-		try
-		{
-			listener_handler::on_new_socket(std::move(socket_), remote);
-		}
-		catch (const std::exception & e)
-		{
-			logs_type::logger()->critical(
-				"on_accept::on_new_socket({}) threw exception: {}",
-				remote,
-				e.what()
-			);
-
-			// Exceptions are for _exceptional circumstances_, so I don't really
-			// care about the performance penalty of a flush after logging the
-			// circumstances involved.
-			logs_type::logger()->flush();
-
-			// CONSIDER:
-			// eating the exception seems to be bad behavior
-			//
-			// shutdown of the acceptor will stop new problems from arising
-			// but will cause denial of service
-			//
-			// re-throwing will force the problem to be detected upstream
-			// (potentially from a crashing application)
-			// ... and may also cause denial of service ...
-			// so if we can't avoid the possibility, then let's at least
-			// try to get a crashdump with the unhandled exception
 			socket_.close();
-			throw;
 		}
 
 		// Specifically: update timestamp upon _exit_ of on_accept()
@@ -492,7 +551,6 @@ protected:
 		asio::io_service & ios
 	)
 		: koti::inheritable_shared_from_this()
-		, logs_type()
 		, listener_handler()
 		, kotipp::timestamp<time_source>()
 		, acceptor(ios)
@@ -507,130 +565,19 @@ protected:
 		endpoint desired_local_endpoint
 	)
 		: koti::inheritable_shared_from_this()
-		, logs_type()
 		, listener_handler()
 		, kotipp::timestamp<time_source>()
 		, acceptor(ios)
 		, ios_(ios)
 		, socket_(ios)
 	{
-		// Open the acceptor.
-		if ( false == open() )
+		if ( false == this->listen(desired_local_endpoint) )
 		{
-			ignore_failure(
-				last_ec_.first,
-				fmt::format("{0}{1}{3}",
-					"listener(ios_,",
-					desired_local_endpoint,
-					")::open()"
-				)
-			);
-			return;
+			throw std::runtime_error{last_ec_.first.message()};
 		}
-
-		// Bind to the server address.
-		acceptor::bind(desired_local_endpoint, last_ec_.first);
-		if ( last_ec_.first )
-		{
-			ignore_failure(last_ec_.first, "bind");
-			return;
-		}
-
-		// Start listening for connections, but do not yet start accepting.
-		acceptor::listen(boost::asio::socket_base::max_connections, last_ec_.first );
-		if( last_ec_.first )
-		{
-			ignore_failure(last_ec_.first, "listen");
-			return;
-		}
-	}
-
-	void
-	ignore_failure(boost::system::error_code ec, std::string msg)
-	{
-		auto result = fail(ec, msg);
-		if ( listener_handler_result::ignore_error != result )
-		{
-			logs_type::logger()->debug("ignoring failure instructions\t{}\t{}\t{}", result, ec.message(), msg);
-		}
-	}
-
-	void
-	ignore_failure(std::string msg)
-	{
-		auto result = fail(msg);
-		return ignore_failure(result);
-	}
-
-	void
-	ignore_failure(listener_handler_result result)
-	{
-		if ( listener_handler_result::ignore_error != result )
-		{
-			logs_type::logger()->debug(
-				"ignoring failure instructions\t{}\t{}\t{}",
-				result,
-				last_ec_.first.message(),
-				last_ec_.second
-			);
-		}
-	}
-
-	listener_handler_result
-	fail(boost::system::error_code ec, std::string msg)
-	{
-		last_ec_.first = std::move(ec);
-		return fail(std::move(msg));
-	}
-
-	listener_handler_result
-	fail(std::string msg)
-	{
-		last_ec_.second = std::move(msg);
-		return fail();
-	}
-
-	listener_handler_result
-	fail()
-	{
-		listener_handler_result result = listener_handler_result::cancel_and_stop;
-
-		// todo: defer logging until we have a result,
-		// try/catch around error_handler_
-		// if caught, log that too
-		try
-		{
-			result = listener_handler::on_listener_error(
-				last_ec_.first,
-				last_ec_.second
-			);
-			log_error();
-		}
-		catch (const std::exception & e)
-		{
-			logs_type::logger()->error("exception \n"
-				"{}\n"
-				"while processing\n"
-				"{}\t{}",
-				e.what(),
-				last_ec_.first.message(), last_ec_.second
-			);
-		}
-
-		return result;
 	}
 
 private:
-	void
-	log_error() const
-	{
-		listener_logs::logger()->error(
-			"{}:\t{}",
-			last_ec_.second,
-			last_ec_.first.message()
-		);
-	}
-
 	asio::io_service & ios_;
 	socket socket_;
 	error_descriptor last_ec_;
