@@ -196,8 +196,7 @@ template <
 	class connection_handler = null_connection_handler
 >
 class connection
-	: virtual public koti::inheritable_shared_from_this
-	, private protocol::socket
+	: private protocol::socket
 	, public connection_handler
 {
 public:
@@ -207,7 +206,7 @@ public:
 	using connection_handler_type = connection_handler;
 	using error_code = boost::system::error_code;
 
-	using pointer = std::shared_ptr<this_type>;
+	using pointer = std::unique_ptr<this_type>;
 
 	using action = connection_action;
 
@@ -220,7 +219,7 @@ public:
 		asio::io_service & ios
 	)
 	{
-		return protected_make_shared_enabler<this_type>(
+		return std::make_unique<this_type>(
 			ios
 		);
 	}
@@ -229,9 +228,18 @@ public:
 		socket_type && s
 	)
 	{
-		return protected_make_shared_enabler<this_type>(
+		return std::make_unique<this_type>(
 			std::move(s)
 		);
+	}
+
+	template <class ... Args>
+	connection(
+		Args && ... args
+	)
+		: socket_type(std::forward<Args...>(args...))
+		, connection_handler()
+	{
 	}
 
 	socket_type & as_socket()
@@ -314,15 +322,6 @@ public:
 
 protected:
 	read_buffer_type read_buffer_;
-
-	template <class ... Args>
-	connection(
-		Args && ... args
-	)
-		: koti::inheritable_shared_from_this()
-		, socket_type(std::forward<Args...>(args...))
-	{
-	}
 };
 
 template <

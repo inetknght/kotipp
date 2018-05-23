@@ -14,7 +14,7 @@ TYPED_TEST_P(net_listener_tests, start_stop_listening)
 {
 	auto & listener_ = this->listener_;
 
-	using protocol = typename TypeParam::protocol_type;
+	using protocol = typename TypeParam::protocol;
 
 	// listen by initialization,
 	// and stop
@@ -23,16 +23,16 @@ TYPED_TEST_P(net_listener_tests, start_stop_listening)
 		EXPECT_TRUE(listener_->is_open());
 		EXPECT_TRUE(listener_->is_bound());
 		EXPECT_TRUE(listener_->is_listening());
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 
 		EXPECT_NO_THROW(listener_->stop());
 		EXPECT_FALSE(listener_->is_open());
 		EXPECT_FALSE(listener_->is_bound());
 		EXPECT_FALSE(listener_->is_listening());
 		EXPECT_FALSE(listener_->had_listener_error_);
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 
 		EXPECT_NO_THROW(listener_->stop());
 	}
@@ -46,16 +46,16 @@ TYPED_TEST_P(net_listener_tests, start_stop_listening)
 		EXPECT_FALSE(listener_->is_bound());
 		EXPECT_FALSE(listener_->is_listening());
 		EXPECT_FALSE(listener_->had_listener_error_);
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 
 		EXPECT_NO_THROW(listener_->stop());
 		EXPECT_FALSE(listener_->is_open());
 		EXPECT_FALSE(listener_->is_bound());
 		EXPECT_FALSE(listener_->is_listening());
 		EXPECT_FALSE(listener_->had_listener_error_);
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 
 		EXPECT_NO_THROW(listener_->stop());
 		EXPECT_NO_THROW(listener_->open());
@@ -63,16 +63,16 @@ TYPED_TEST_P(net_listener_tests, start_stop_listening)
 		EXPECT_FALSE(listener_->is_bound());
 		EXPECT_FALSE(listener_->is_listening());
 		EXPECT_FALSE(listener_->had_listener_error_);
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 
 		EXPECT_NO_THROW(listener_->listen());
 		EXPECT_TRUE(listener_->is_open());
 		EXPECT_TRUE(listener_->is_bound());
 		EXPECT_TRUE(listener_->is_listening());
 		EXPECT_FALSE(listener_->had_listener_error_);
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 	}
 
 	// remake,
@@ -83,16 +83,16 @@ TYPED_TEST_P(net_listener_tests, start_stop_listening)
 		EXPECT_FALSE(listener_->is_bound());
 		EXPECT_FALSE(listener_->is_listening());
 		EXPECT_FALSE(listener_->had_listener_error_);
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 
 		EXPECT_NO_THROW(listener_->listen());
 		EXPECT_TRUE(listener_->is_open());
 		EXPECT_TRUE(listener_->is_bound());
 		EXPECT_TRUE(listener_->is_listening());
 		EXPECT_FALSE(listener_->had_listener_error_);
-		EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-		EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+		EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+		EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 	}
 }
 

@@ -14,8 +14,8 @@ TYPED_TEST_P(net_listener_tests, listen_no_port_selected)
 	EXPECT_TRUE(listener_->is_bound());
 	EXPECT_TRUE(listener_->is_listening());
 	EXPECT_FALSE(listener_->had_listener_error_);
-	EXPECT_EQ(listener_->last_listener_error_, boost::system::error_code());
-	EXPECT_EQ(listener_->last_listener_error_.message(), boost::system::error_code().message());
+	EXPECT_EQ(listener_->last_listener_error_.first, boost::system::error_code());
+	EXPECT_EQ(listener_->last_listener_error_.first.message(), boost::system::error_code().message());
 	EXPECT_NE(listener_->local_endpoint().port(), 0u);
 }
 

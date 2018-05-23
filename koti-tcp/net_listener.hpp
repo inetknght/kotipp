@@ -45,15 +45,8 @@ enum class listener_action
 	reject_connection
 };
 
-template <
-	class protocol
->
 class listener_handler {
 public:
-	using socket = typename protocol::socket;
-	using acceptor = typename protocol::acceptor;
-	using endpoint = typename protocol::endpoint;
-
 	listener_action
 	on_listener_bound(
 	);
@@ -62,9 +55,12 @@ public:
 	on_listener_listening(
 	);
 
+	template <
+		class Socket
+	>
 	listener_action
 	on_new_socket(
-		socket &&
+		Socket &&
 	);
 
 	void
@@ -97,17 +93,9 @@ std::ostream & operator<<(
 	return o;
 }
 
-template <
-	class protocol = tcp
->
 class null_listener_handler
 {
 public:
-	using socket = typename protocol::socket;
-	using acceptor = typename protocol::acceptor;
-	using endpoint = typename protocol::endpoint;
-	using handler_type = listener_handler<protocol>;
-	
 	listener_action
 	on_listener_bound(
 	)
@@ -122,9 +110,12 @@ public:
 		return listener_action::normal;
 	}
 
+	template <
+		class Socket
+	>
 	listener_action
 	on_new_socket(
-		socket && s
+		Socket && s
 	)
 	{
 		s.close();
@@ -139,6 +130,7 @@ public:
 
 	listener_action
 	on_listener_error(
+		const boost::system::error_code &,
 		const std::string &
 	)
 	{
@@ -147,96 +139,29 @@ public:
 };
 
 template <
-	class logged_handler
->
-class simple_listener_logging_handler
-	: public listener_logs
-{
-public:
-	listener_action
-	on_listener_bound(
-	)
-	{
-		listener_logs::logger()->info(
-			"bind()	{}",
-			static_cast<typename logged_handler::protocol::acceptor&>(*this).local_endpoint()
-		);
-		return listener_action::normal;
-	}
-
-	listener_action
-	on_listener_listening(
-	)
-	{
-		listener_logs::logger()->info(
-			"listen()	{}",
-			static_cast<typename logged_handler::protocol::acceptor&>(*this).local_endpoint()
-		);
-		return listener_action::normal;
-	}
-
-	listener_action
-	on_new_socket(
-		typename logged_handler::protocol::socket && s
-	)
-	{
-		const auto & remote_endpoint = s.remote_endpoint();
-		listener_logs::logger()->info(
-			"{}:	incoming:	{}",
-			static_cast<typename logged_handler::protocol::acceptor&>(*this).local_endpoint(),
-			remote_endpoint
-		);
-		return listener_action::normal;
-	}
-
-	void
-	on_listener_closed(
-	)
-	{
-		listener_logs::logger()->info(
-			"listener closed"
-		);
-	}
-
-	listener_action
-	on_listener_error(
-		const boost::system::error_code & ec,
-		const std::string & listener_message
-	)
-	{
-		listener_logs::logger()->error(
-			"listener error:{}	{}",
-			listener_message,
-			ec
-		);
-		return listener_action::normal;
-	}
-};
-
-template <
-	class protocol,
-	class listener_handler = null_listener_handler<protocol>,
-	class time_source = std::chrono::steady_clock
+	class Protocol,
+	class ListenerHandler = null_listener_handler,
+	class TimeSource = std::chrono::steady_clock
 >
 class listener
 	: virtual public koti::inheritable_shared_from_this
-	, public listener_handler
+	, public ListenerHandler
 	// TODO: timestamping belongs in the handler
-	, private kotipp::timestamp<time_source>
-	, private protocol::acceptor
+	, private kotipp::timestamp<TimeSource>
+	, private Protocol::acceptor
 {
 public:
 	using this_type = listener;
 
-	using protocol_type = protocol;
+	using protocol = Protocol;
 	using pointer = std::shared_ptr<this_type>;
 	using socket = typename protocol::socket;
 	using acceptor = typename protocol::acceptor;
 	using endpoint = typename protocol::endpoint;
 	using logs_type = listener_logs;
-	using listener_handler_type = listener_handler;
+	using listener_handler = ListenerHandler;
 
-	using time_source_type = time_source;
+	using time_source = TimeSource;
 	using time_point = typename time_source::time_point;
 	using time_duration = typename time_point::duration;
 
@@ -376,7 +301,7 @@ public:
 	}
 
 	bool
-	listen(endpoint at_addr = protocol_type::local_endpoint())
+	listen(endpoint at_addr = protocol::local_endpoint())
 	{
 		if ( is_listening() )
 		{
@@ -586,6 +511,92 @@ private:
 	// because, eg, tcp protocol might have auto-selected a port if we bound 0
 	endpoint local_endpoint_;
 };
+
+/*
+template <
+	class Protocol,
+	class ListenerHandler,
+	class TimeSource = 
+>
+class listener_logging_policy
+: private listener_logs
+, private listener<
+	typename Listener::protocol,
+	listener_logging_policy,
+	typename Listener::time_source
+>
+, private Listener::listener_handler
+{
+	// My inherited type
+	using real_listener_type =
+		listener<
+			typename Listener::protocol,
+			listener_logging_policy,
+			typename Listener::time_source
+		>;
+
+	// The type I am pretending to be.
+	using faux_listener_type = Listener;
+public:
+	listener_action
+	on_listener_bound(
+	)
+	{
+		listener_logs::logger()->info(
+			"bind()	{}",
+			real_listener_type::local_endpoint()
+		);
+		return listener_action::normal;
+	}
+
+	listener_action
+	on_listener_listening(
+	)
+	{
+		listener_logs::logger()->info(
+			"listen()	{}",
+			real_listener_type::local_endpoint()
+		);
+		return listener_action::normal;
+	}
+
+	template <
+		class Socket
+	>
+	listener_action
+	on_new_socket(
+		Socket && s
+	)
+	{
+		listener_logs::logger()->info(
+			"incoming socket	{}	{}",
+			real_listener_type::local_endpoint(),
+			s.remote_endpoint()
+		);
+		return listener_action::normal;
+	}
+
+	void
+	on_listener_closed(
+	)
+	{
+	}
+
+	listener_action
+	on_listener_error(
+		const boost::system::error_code & ec,
+		const std::string & listener_message
+	)
+	{
+		listener_logs::logger()->error(
+			"listener error: {}	{}",
+			listener_message,
+			ec
+		);
+		return listener_action::normal;
+	}
+};
+*/
 
 template <class ... Args>
 using tcp4_listener = listener<tcp4, Args ...>;

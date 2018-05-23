@@ -42,30 +42,24 @@ protected:
 	}
 };
 
-template <
-	class protocol = tcp
->
 class plexer_handler
-	: private listener_handler<protocol>
+	: private listener_handler
 {
 public:
-	using listener_handler_type = listener_handler<protocol>;
+	using listener_handler_type = listener_handler;
 };
 
-template <
-	class protocol = tcp
->
 class null_plexer_handler
-	: private plexer_handler<protocol>
-	, public null_listener_handler<protocol>
+	: private plexer_handler
+	, public null_listener_handler
 {
 public:
-	using listener_handler_type = null_listener_handler<protocol>;
+	using listener_handler_type = null_listener_handler;
 };
 
 template <
 	class protocol = tcp,
-	class plexer_handler = null_plexer_handler<protocol>,
+	class plexer_handler = null_plexer_handler,
 	class connection = connection<protocol, plexer_handler>,
 	class listener = listener<protocol, plexer_handler>
 >
