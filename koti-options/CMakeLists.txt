@@ -4,6 +4,7 @@ FILE(GLOB KOTI_OPTIONS_HDR "*.hpp")
 
 SET(KOTI_OPTIONS_LIB_DEPENDENCIES
 	spdlog
+	koti_exceptions_lib
 	${Boost_LIBRARIES}
 )
 
@@ -15,7 +16,6 @@ IF(KOTI_OPTIONS_SRC)
 		${KOTI_OPTIONS_SRC}
 	)
 	TARGET_LINK_LIBRARIES(koti_options_lib
-		spdlog
 		${KOTI_OPTIONS_LIB_DEPENDENCIES}
 	)
 ELSE()
@@ -24,7 +24,6 @@ ELSE()
 	ADD_LIBRARY(koti_options_lib INTERFACE)
 	TARGET_LINK_LIBRARIES(koti_options_lib
 		INTERFACE
-		spdlog
 		${KOTI_OPTIONS_LIB_DEPENDENCIES}
 	)
 ENDIF()

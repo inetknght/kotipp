@@ -7,6 +7,8 @@ namespace spd = spdlog;
 #include <iostream>
 #include <vector>
 
+#include "exceptions/unhandled_value.hpp"
+
 namespace koti {
 
 options::configuration &
@@ -19,12 +21,6 @@ const options::configuration &
 options::get_configuration() const
 {
 	return configuration_;
-}
-
-options::descriptions &
-options::configurator::operator ()()
-{
-	return descriptions_;
 }
 
 options::configurator_list &
@@ -58,40 +54,6 @@ options::add(configurator & p)
 	return *this;
 }
 
-options &
-options::operator()(configurator & c)
-{
-	add(c);
-	return *this;
-}
-
-options::validate
-options::null_configurator::validate_configuration(
-	options &
-)
-{
-	return validate::ok;
-}
-
-void
-options::null_configurator::add_options(
-	options &
-)
-{
-}
-
-options::commandline &
-options::get_commandline()
-{
-	return commandline_;
-}
-
-const options::commandline &
-options::get_commandline() const
-{
-	return commandline_;
-}
-
 options::commandline_arguments::commandline_arguments(
 	int argc,
 	char **argv
@@ -103,12 +65,6 @@ options::commandline_arguments::commandline_arguments(
 	{
 		std::cerr << "warning: argv[" << argc << "] is not null (POSIX violation)\n";
 	}
-}
-
-options::validate
-options::configure()
-{
-	return configure_internal();
 }
 
 const options::commandline_arguments &
@@ -125,27 +81,64 @@ options::options(
 }
 
 options::validate
+options::configure()
+{
+	return configure_internal();
+}
+
+options::validate
 options::configure_internal()
 {
+
 	using step_description = std::function<validate()>;
 	for ( auto step : std::initializer_list<step_description>{
+		[&](){return build_configurator_list_and_descriptions();},
 		[&](){return parse_commandline();},
 		[&](){return notify_and_validate();}
 	})
 	{
-		auto valid = step();
-		switch (valid)
+		auto result = step();
+		switch (result)
 		{
-		case validate::reject:
-			[[fallthrough]];
+		case validate::ok: continue;
 		case validate::reject_not_failure:
-			return valid;
-		case validate::ok:
-			break;
+			[[fallthrough]]
+		case validate::reject:
+			return result;
 		}
 	}
 
 	return validate::ok;
+}
+
+options::validate
+options::build_configurator_list_and_descriptions()
+{
+	validate result = validate::ok;
+	for (
+		std::size_t
+			at = 0,
+			until = configurators_.size();
+		[&]()->bool
+		{
+			while (at < until)
+			{
+				result = configurators_[at]->add_options(*this);
+				switch (result)
+				{
+				case validate::ok: continue;
+				case validate::reject_not_failure:
+					[[fallthrough]]
+				case validate::reject:
+					return false;
+				};
+				until = configurators_.size();
+			}
+			return true;
+		}();
+		++at
+	);
+	return result;
 }
 
 options::validate
@@ -162,7 +155,7 @@ options::parse_commandline()
 
 		po::store(
 			po::command_line_parser(argv.size(), argv.data())
-			.options(commandline_())
+			.options(descriptions_)
 			.run(),
 			configuration_
 		);
@@ -177,7 +170,7 @@ options::parse_commandline()
 		std::cerr
 			<< e.what() << '\n'
 			<< '\n'
-			<< commandline_()
+			<< descriptions_
 			<< '\n';
 		return validate::reject;
 	}
@@ -193,12 +186,11 @@ options::notify_and_validate()
 		auto valid = configurator->validate_configuration(*this);
 		switch (valid)
 		{
+		case validate::ok: continue;
 		case validate::reject:
 			[[fallthrough]];
 		case validate::reject_not_failure:
 			return valid;
-		case validate::ok:
-			break;
 		}
 	}
 

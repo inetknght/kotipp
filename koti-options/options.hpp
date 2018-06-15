@@ -12,7 +12,7 @@ namespace koti {
 class options
 {
 public:
-	using descriptions = po::options_description;
+	using description = po::options_description;
 	using configuration = po::variables_map;
 
 	configuration & get_configuration();
@@ -42,12 +42,19 @@ public:
 	class configurator
 	{
 	public:
-		descriptions & operator()();
+		virtual
+		validate
+		add_options(
+			options &
+		) = 0;
 
-		virtual validate validate_configuration(options & storage) = 0;
-		virtual void add_options(options & storage) = 0;
+		virtual
+		validate
+		validate_configuration(
+			options &
+		) = 0;
 	protected:
-		descriptions descriptions_;
+		description descriptions_;
 	};
 
 	using configurator_list = std::vector<configurator*>;
@@ -60,24 +67,6 @@ public:
 
 	options &
 	add(configurator & p);
-
-	options &
-	operator()(configurator & c);
-
-	class null_configurator
-		: public virtual configurator
-	{
-	public:
-		validate validate_configuration(options & storage) override;
-		void add_options(options & storage) override;
-	};
-
-	class commandline
-		: public null_configurator
-	{};
-
-	commandline & get_commandline();
-	const commandline & get_commandline() const;
 
 	class commandline_arguments
 	{
@@ -99,11 +88,30 @@ public:
 		char **argv_ = nullptr;
 	};
 
-	const commandline_arguments & arguments() const;
+	const commandline_arguments &
+	arguments() const;
+
+	commandline_arguments &
+	arguments()
+	{
+		return args_;
+	}
 
 	options(
 		const commandline_arguments & args
 	);
+
+	const description &
+	descriptions() const
+	{
+		return descriptions_;
+	}
+
+	description &
+	descriptions()
+	{
+		return descriptions_;
+	}
 
 	[[nodiscard]]
 	validate
@@ -116,6 +124,10 @@ protected:
 
 	[[nodiscard]]
 	validate
+	build_configurator_list_and_descriptions();
+
+	[[nodiscard]]
+	validate
 	parse_commandline();
 
 	[[nodiscard]]
@@ -125,9 +137,9 @@ protected:
 	configurator_list configurators_;
 
 	commandline_arguments args_;
-	commandline commandline_;
 
 	configuration configuration_;
+	description descriptions_;
 };
 
 } // namespace koti
