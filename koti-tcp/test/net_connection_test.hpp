@@ -1,139 +1,168 @@
-#pragma once
+//#pragma once
 
-#include <gtest/gtest.h>
+//#include <gtest/gtest.h>
 
-#include "../net_connection.hpp"
+//#include "../net_connection.hpp"
 
-namespace koti {
+//namespace koti {
 
-class net_connection_test_handler;
+//template <
+//	class Protocol
+//>
+//class net_connection_test_handler;
 
-class test_clock
-{
-public:
-	using clock = std::chrono::steady_clock;
-	using time_point = typename clock::time_point;
-	using duration = typename time_point::duration;
+//class test_clock
+//{
+//public:
+//	using clock = std::chrono::steady_clock;
+//	using time_point = typename clock::time_point;
+//	using duration = typename time_point::duration;
 
-	static time_point now()
-	{
-		return now_;
-	}
+//	static time_point now()
+//	{
+//		return now_;
+//	}
 
-	static time_point & set_now()
-	{
-		return set_now(clock::now());
-	}
+//	static time_point & set_now()
+//	{
+//		return set_now(clock::now());
+//	}
 
-	static time_point & set_now(time_point and_now)
-	{
-		return now_ = and_now;
-	}
+//	static time_point & set_now(time_point and_now)
+//	{
+//		return now_ = and_now;
+//	}
 
-private:
-	static time_point now_;
-};
+//private:
+//	static time_point now_;
+//};
 
-using test_connection_timer_handler = connection_timer_handler<test_clock>;
-class net_connection_test_handler
-	: public buffered_read_connection_handler
-	, public buffered_write_connection_handler
-	, public test_connection_timer_handler
-{
-public:
-	using action = typename connection_handler::action;
-	using connection_timer_handler_type = test_connection_timer_handler;
+//using test_connection_timer_handler = connection_timer_handler<test_clock>;
 
-	bool had_connected_ = false;
-	bool had_error_ = false;
-	boost::system::error_code last_connection_error_;
-	bool had_disconnected_ = false;
-	bool had_write_complete_ = false;
-	bool had_read_complete_ = false;
+//template <
+//	class Protocol
+//>
+//class net_connection_test_handler
+//	: public buffered_read_connection_handler
+//	, public buffered_write_connection_handler
+//	, public test_connection_timer_handler
+//	, public connection<Protocol, net_connection_test_handler>
+//{
+//public:
+//	using action = typename connection_handler::action;
+//	using connection_timer_handler_type = test_connection_timer_handler;
 
-	action
-	on_connected(const boost::system::error_code & ec)
-	{
-		had_connected_ = true;
-		last_connection_error_ = ec;
-		return connection_timer_handler_type::on_connected(ec);
-	}
+//	using pointer = std::unique_ptr<net_connection_test_handler>;
 
-	action
-	on_write_complete(const boost::system::error_code & ec, std::size_t transferred)
-	{
-		had_write_complete_ = true;
-		last_connection_error_ = ec;
-		return buffered_write_connection_handler::on_write_complete(ec, transferred);
-	}
+//	static
+//	pointer
+//	make(asio::io_service & iox)
+//	{
+//		return std::make_unique<net_connection_test_handler>(iox);
+//	}
 
-	action
-	on_read_complete(const boost::system::error_code & ec, std::size_t transferred)
-	{
-		had_read_complete_ = true;
-		last_connection_error_ = ec;
-		return buffered_read_connection_handler::on_read_complete(ec, transferred);
-	}
+//	net_connection_test_handler(
+//		asio::io_service & iox
+//	)
+//	: buffered_read_connection_handler()
+//	, buffered_write_connection_handler()
+//	, test_connection_timer_handler()
+//	, connection(iox)
+//	{
+//	}
 
-	action
-	on_disconnect()
-	{
-		had_disconnected_ = true;
-		return action::normal;
-	}
-};
+//	bool had_connected_ = false;
+//	bool had_error_ = false;
+//	boost::system::error_code last_connection_error_;
+//	bool had_disconnected_ = false;
+//	bool had_write_complete_ = false;
+//	bool had_read_complete_ = false;
 
-template <
-	class connection
->
-class net_connection_tests
-	: public testing::Test
-{
-public:
-	using connection_type = connection;
-	using protocol_type = typename connection::protocol_type;
-	using socket_type = typename connection::socket_type;
-	using endpoint_type = typename socket_type::endpoint_type;
+//	action
+//	on_connected(const boost::system::error_code & ec)
+//	{
+//		had_connected_ = true;
+//		last_connection_error_ = ec;
+//		return connection_timer_handler_type::on_connected(ec);
+//	}
 
-	net_connection_tests(
-	)
-		: testing::Test()
-	{
-	}
+//	action
+//	on_write_complete(const boost::system::error_code & ec, std::size_t transferred)
+//	{
+//		had_write_complete_ = true;
+//		last_connection_error_ = ec;
+//		return buffered_write_connection_handler::on_write_complete(ec, transferred);
+//	}
 
-	virtual ~net_connection_tests()
-	{
-	}
+//	action
+//	on_read_complete(const boost::system::error_code & ec, std::size_t transferred)
+//	{
+//		had_read_complete_ = true;
+//		last_connection_error_ = ec;
+//		return buffered_read_connection_handler::on_read_complete(ec, transferred);
+//	}
 
-	typename connection_type::pointer make()
-	{
-		return connection_type::make(ios_);
-	}
+//	action
+//	on_disconnect()
+//	{
+//		had_disconnected_ = true;
+//		return action::normal;
+//	}
+//};
 
-	asio::io_service ios_;
+//template <
+//	class connection
+//>
+//class net_connection_tests
+//	: public testing::Test
+//{
+//public:
+//	using this_type = net_connection_tests;
+//	using connection_type = connection;
+//	using protocol_type = typename connection::protocol_type;
+//	using socket_type = typename connection::socket_type;
+//	using endpoint_type = typename socket_type::endpoint_type;
 
-	boost::system::error_code test_ec_;
-	std::vector<socket_type> sockets_;
-};
-TYPED_TEST_CASE_P(net_connection_tests);
+//	net_connection_tests(
+//	)
+//		: testing::Test()
+//	{
+//	}
 
-using test_tcp4_connection = tcp4_connection<net_connection_test_handler>;
-using test_tcp6_connection = tcp6_connection<net_connection_test_handler>;
-using test_local_connection = local_connection<net_connection_test_handler>;
-using net_connection_all_tests = ::testing::Types<
-	//test_tcp_connection,
-	test_tcp4_connection,
-	test_tcp6_connection,
-	test_local_connection
->;
+//	virtual ~net_connection_tests()
+//	{
+//	}
 
-using net_connection_tcp_tests = ::testing::Types<
-	test_tcp4_connection,
-	test_tcp6_connection
->;
+//	net_connection_test_handler::pointer
+//	make()
+//	{
+//		return net_connection_test_handler::make(iox_);
+//	}
 
-using net_connection_local_tests = ::testing::Types<
-	test_local_connection
->;
+//	asio::io_service iox_;
 
-} // namespace koti
+//	boost::system::error_code test_ec_;
+//	std::vector<socket_type> sockets_;
+//};
+//TYPED_TEST_CASE_P(net_connection_tests);
+
+//using test_tcp4_connection = tcp4_connection<net_connection_test_handler>;
+//using test_tcp6_connection = tcp6_connection<net_connection_test_handler>;
+//using test_local_connection = local_connection<net_connection_test_handler>;
+//using net_connection_all_tests = ::testing::Types<
+//	//test_tcp_connection,
+//	test_tcp4_connection,
+//	test_tcp6_connection,
+//	test_local_connection
+//>;
+
+//using net_connection_tcp_tests = ::testing::Types<
+//	test_tcp4_connection,
+//	test_tcp6_connection
+//>;
+
+//using net_connection_local_tests = ::testing::Types<
+//	test_local_connection
+//>;
+
+//} // namespace koti
