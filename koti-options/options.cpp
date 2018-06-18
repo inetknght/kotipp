@@ -119,25 +119,27 @@ options::build_configurator_list_and_descriptions()
 		std::size_t
 			at = 0,
 			until = configurators_.size();
-		[&]()->bool
-		{
-			while (at < until)
-			{
-				result = configurators_[at]->add_options(*this);
-				switch (result)
-				{
-				case validate::ok: continue;
-				case validate::reject_not_failure:
-					[[fallthrough]]
-				case validate::reject:
-					return false;
-				};
-				until = configurators_.size();
-			}
-			return true;
-		}();
+		at < until;
 		++at
-	);
+	)
+	{
+		result = configurators_[at]->add_options(*this);
+		switch (result)
+		{
+		case validate::ok:
+			until = configurators_.size();
+			continue;
+		case validate::reject_not_failure:
+			[[fallthrough]]
+		case validate::reject:
+			return result;
+		default:
+			throw koti::exception::unhandled_value{
+				{"koti::options::validate"},
+				result
+			};
+		};
+	}
 	return result;
 }
 

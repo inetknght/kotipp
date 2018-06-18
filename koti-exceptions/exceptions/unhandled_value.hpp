@@ -28,7 +28,7 @@ public:
         std::string_view message,
         unhandled_type && t
     )
-    : std::logic_error{message}
+    : std::logic_error{std::string{message}}
     , type_index_(typeid(unhandled_type))
     , value_(t)
     {
