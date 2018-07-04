@@ -1,5 +1,10 @@
 #pragma once
 
+extern "C" {
+#include <sys/socket.h>
+#include <sys/un.h>
+} // extern "C"
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -123,13 +128,31 @@ public:
 	{
 	public:
 		using asio::local::basic_endpoint<local_stream>::basic_endpoint;
-		bool is_abstract() const;
+
+		bool
+		is_abstract(
+		) const;
 	};
 
 	using socket = asio::basic_stream_socket<local_stream>;
 	using acceptor = asio::basic_socket_acceptor<local_stream>;
 //	using resolver = asio::ip::basic_resolver<local_stream>;
 	using iostream = asio::basic_socket_iostream<local_stream>;
+
+	using ucred = struct ucred;
+
+	static
+	ucred
+	remote_identity(
+		socket & s,
+		boost::system::error_code & ec
+	);
+
+	static
+	ucred
+	remote_identity(
+		socket & s
+	);
 
 	static
 	endpoint

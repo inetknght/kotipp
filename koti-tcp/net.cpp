@@ -1,5 +1,7 @@
 #include "net.hpp"
 
+#include <boost/system/error_code.hpp>
+
 namespace koti
 {
 
@@ -113,6 +115,70 @@ local_stream::endpoint::is_abstract() const
 {
 	const auto & p = path();
 	return (false == p.empty() && p[0] == '\0');
+}
+
+local_stream::ucred
+local_stream::remote_identity(
+	socket & s,
+	boost::system::error_code & ec
+)
+{
+	// from `man socket` -> see also fcntl, see also unix
+	// from `man fcntl`
+	// from `man unix` -> SCM_CREDENTIALS, see also cmsg
+	// from `man cmsg`
+	// struct msghdr msgh;
+	// struct cmsghdr *cmsg;
+	// struct ucred *credptr;
+	// for (
+	// 	 cmsg = CMSG_FIRSTHDR(&cmsg);
+	// 	 cmsg != nullptr;
+	// 	 cmsg = CMSG_NEXTHDR(&msgh, cmsg)
+	// )
+	// {
+	// 	if ( cmsg->cmsg_level != SOL_SOCKET )
+	// 	{
+	// 		continue;
+	// 	}
+	// 	if ( cmsg->cmsg_type != SCM_CREDENTIALS )
+	// 	{
+	// 		continue;
+	// 	}
+	// 	credptr = (struct ucred *)CMSG_DATA(cmsg);
+	// }
+
+	// from `man socket` -> see also getsockopt
+	ucred ident;
+	ident.pid = -1;
+	ident.uid = -1;
+	ident.gid = -1;
+
+	socklen_t len = sizeof(ident);
+	if ( getsockopt(s.native_handle(), SOL_SOCKET, SO_PEERCRED, &ident, &len) < 0 )
+	{
+		ec = boost::system::error_code{errno, boost::system::generic_category()};
+	}
+	else if ( sizeof(ident) != len )
+	{
+		assert(false && "oh snap, need to create our own error condition et al and tell the client code that getsockopt() behaves unexpectedly");
+		ec = boost::system::error_code{EINVAL, boost::system::generic_category()};
+	}
+
+	return ident;
+}
+
+local_stream::ucred
+local_stream::remote_identity(
+	socket & s
+)
+{
+	boost::system::error_code ec;
+	auto ident = remote_identity(s, ec);
+	if ( ec )
+	{
+		throw std::runtime_error{ec.message()};
+	}
+	return ident;
 }
 
 local_stream::endpoint

@@ -166,14 +166,8 @@ options::parse_commandline()
 	}
 	catch (const std::exception & e)
 	{
-		auto console = spd::stdout_color_mt("console");
+		auto console = spd::stderr_color_mt("console");
 		console->error(e.what());
-
-		std::cerr
-			<< e.what() << '\n'
-			<< '\n'
-			<< descriptions_
-			<< '\n';
 		return validate::reject;
 	}
 

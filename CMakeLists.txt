@@ -84,6 +84,7 @@ INCLUDE_DIRECTORIES(SYSTEM ${BZIP2_INCLUDE_DIRS})
 # kotipp: main support library and test executable
 ADD_SUBDIRECTORY(kotipp)
 
+ADD_SUBDIRECTORY(koti-test-support)
 ADD_SUBDIRECTORY(koti-options)
 ADD_SUBDIRECTORY(koti-exceptions)
 
