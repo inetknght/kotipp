@@ -1,6 +1,7 @@
 #include "options.hpp"
 
 #include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 namespace spd = spdlog;
 
 #include <algorithm>
