@@ -85,8 +85,9 @@ INCLUDE_DIRECTORIES(SYSTEM ${BZIP2_INCLUDE_DIRS})
 ADD_SUBDIRECTORY(kotipp)
 
 ADD_SUBDIRECTORY(koti-test-support)
-ADD_SUBDIRECTORY(koti-options)
 ADD_SUBDIRECTORY(koti-exceptions)
+ADD_SUBDIRECTORY(koti-options)
+ADD_SUBDIRECTORY(koti-application)
 
 # koti-tcp: tcpip networking library.
 # todo: refactor into koti-network, koti-tcp, koti-domain, etc
@@ -99,4 +100,3 @@ INSTALL(EXPORT
 )
 
 EXPORT(PACKAGE kotipp)
-

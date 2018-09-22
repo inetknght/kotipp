@@ -1,0 +1,14 @@
+FILE(GLOB KOTI_APPLICATION_TEST_SRC "*.cpp")
+FILE(GLOB KOTI_APPLICATION_TEST_HDR "*.hpp")
+
+ADD_DEFINITIONS(-DTEST_DIR_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/../../")
+
+ADD_EXECUTABLE(koti_application_test ${KOTI_APPLICATION_TEST_SRC} ${KOTI_APPLICATION_TEST_HDR})
+
+TARGET_LINK_LIBRARIES(koti_application_test
+	koti_application_lib
+	koti_test_support_lib
+	gtest_main
+)
+
+GTEST_ADD_TESTS(koti_application_test "" ${KOTI_APPLICATION_TEST_SRC})
