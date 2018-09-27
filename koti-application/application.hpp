@@ -28,13 +28,54 @@ namespace koti {
 class application
 : public options::configurator
 {
-	enum class daemonize_status
-	{
-		daemonized_parent,
-		daemonized_child
-	};
+	using daemon_socket_type = boost::asio::local::stream_protocol::socket;
 
 public:
+	class daemonize_status
+	final
+	{
+	public:
+		static
+		daemonize_status
+		child(daemon_socket_type && child_socket)
+		{
+			return {std::move(child_socket), 0};
+		}
+
+		static
+		daemonize_status
+		parent(daemon_socket_type && parent_socket, pid_t child_pid)
+		{
+			return {std::move(parent_socket), child_pid};
+		}
+
+		bool
+		is_child() const
+		{
+			return 0 == pid_;
+		}
+
+		bool
+		is_parent() const
+		{
+			return 0 != pid_;
+		}
+
+		daemonize_status(daemonize_status && move_ctor) = default;
+		daemonize_status & operator=(daemonize_status && move_assign) = default;
+
+	protected:
+
+		daemonize_status(daemon_socket_type && socket, pid_t pid)
+		: socket_(std::move(socket))
+		, pid_(pid)
+		{
+
+		}
+
+		daemon_socket_type socket_;
+		pid_t pid_ = 0;
+	};
 
 	class exit_status
 	{
@@ -177,6 +218,8 @@ protected:
 	std::shared_ptr<spd::logger> syslog_;
 	pid_t session_id_ = 0;
 	bool no_daemonize_ = false;
+
+	daemonize_status daemonization_;
 
 private:
 	step_list_type step_list_;

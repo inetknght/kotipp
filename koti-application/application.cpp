@@ -29,7 +29,9 @@ namespace koti {
 application::application(
 	options::commandline_arguments options
 )
-: options_(options)
+: iox_()
+, options_(options)
+, daemonization_(daemonize_status::parent(daemon_socket_type{iox_}, ::getpid()))
 {
 	work_ = std::make_unique<executor_work_guard_type>(iox_.get_executor());
 
@@ -51,8 +53,8 @@ application::application(
 				// Parent shall exit.
 				// Child shall live on.
 				// Error threw for main() to catch.
-				auto result = daemonize();
-				if ( daemonize_status::daemonized_parent == result )
+				daemonization_ = daemonize();
+				if ( daemonization_.is_parent() )
 				{
 					return daemonized();
 				}
@@ -210,7 +212,7 @@ application::daemonize()
 		}
 
 		// It appears the child successfully daemonized. We're done here.
-		return daemonize_status::daemonized_parent;
+		return daemonize_status::parent(std::move(parent_sock_), pid);
 	}
 
 	iox_.notify_fork(asio::execution_context::fork_child);
@@ -255,7 +257,7 @@ application::daemonize()
 	::close(STDOUT_FILENO);
 	::close(STDERR_FILENO);
 
-	return daemonize_status::daemonized_child;
+	return daemonize_status::child(std::move(child_sock_));
 }
 
 options::validate

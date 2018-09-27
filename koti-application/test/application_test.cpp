@@ -23,7 +23,18 @@ extern "C" {
 #define TEST_DIR_ROOT ""
 #endif
 
-class application_test : public ::testing::Test {
+class test_application
+: protected koti::application
+{
+public:
+	using koti::application::application;
+	virtual ~test_application() = default;
+};
+
+class application_test
+: public
+	::testing::Test
+{
 public:
 
 	void
