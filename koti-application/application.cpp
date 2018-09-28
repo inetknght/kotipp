@@ -26,6 +26,94 @@ extern "C" {
 
 namespace koti {
 
+application::daemonize_status
+application::daemonize_status::child(
+	daemon_socket_type && child_socket
+)
+{
+	return {std::move(child_socket), 0};
+}
+
+application::daemonize_status
+application::daemonize_status::parent(
+	daemon_socket_type && parent_socket,
+	pid_t child_pid
+)
+{
+	return {std::move(parent_socket), child_pid};
+}
+
+bool
+application::daemonize_status::is_child() const
+{
+	return 0 == pid_;
+}
+
+bool
+application::daemonize_status::is_parent() const
+{
+	return 0 != pid_;
+}
+
+application::daemonize_status::daemonize_status(
+	daemon_socket_type && socket,
+	pid_t pid
+)
+: socket_(std::move(socket))
+, pid_(pid)
+{
+}
+
+application::exit_status
+application::exit_status::success()
+{
+	return {success_};
+}
+
+application::exit_status
+application::exit_status::failure()
+{
+	return {failure_};
+}
+
+int
+application::exit_status::value(
+) const
+{
+	return exit_status_;
+}
+
+bool
+application::exit_status::is_success(
+) const
+{
+	return success_ == exit_status_;
+}
+
+bool
+application::exit_status::is_bad(
+) const
+{
+	return success_ != exit_status_;
+}
+
+application::exit_status::
+operator bool(
+) const
+{
+	return is_success();
+}
+
+application::exit_status::exit_status(
+	int status
+)
+: exit_status_(status)
+{
+}
+
+constexpr const int application::exit_status::success_;
+constexpr const int application::exit_status::failure_;
+
 application::application(
 	options::commandline_arguments options
 )

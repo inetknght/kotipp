@@ -37,41 +37,29 @@ public:
 	public:
 		static
 		daemonize_status
-		child(daemon_socket_type && child_socket)
-		{
-			return {std::move(child_socket), 0};
-		}
+		child(
+			daemon_socket_type && child_socket
+		);
 
 		static
 		daemonize_status
-		parent(daemon_socket_type && parent_socket, pid_t child_pid)
-		{
-			return {std::move(parent_socket), child_pid};
-		}
+		parent(
+			daemon_socket_type && parent_socket,
+			pid_t child_pid
+		);
 
 		bool
-		is_child() const
-		{
-			return 0 == pid_;
-		}
+		is_child() const;
 
 		bool
-		is_parent() const
-		{
-			return 0 != pid_;
-		}
+		is_parent() const;
 
 		daemonize_status(daemonize_status && move_ctor) = default;
 		daemonize_status & operator=(daemonize_status && move_assign) = default;
 
 	protected:
 
-		daemonize_status(daemon_socket_type && socket, pid_t pid)
-		: socket_(std::move(socket))
-		, pid_(pid)
-		{
-
-		}
+		daemonize_status(daemon_socket_type && socket, pid_t pid);
 
 		daemon_socket_type socket_;
 		pid_t pid_ = 0;
@@ -82,17 +70,11 @@ public:
 	public:
 		static
 		exit_status
-		success()
-		{
-			return {success_};
-		}
+		success();
 
 		static
 		exit_status
-		failure()
-		{
-			return {failure_};
-		}
+		failure();
 
 		exit_status(
 		) = delete;
@@ -117,38 +99,23 @@ public:
 
 		int
 		value(
-		) const
-		{
-			return exit_status_;
-		}
+		) const;
 
 		bool
 		is_success(
-		) const
-		{
-			return success_ == exit_status_;
-		}
+		) const;
 
 		bool
 		is_bad(
-		) const
-		{
-			return success_ != exit_status_;
-		}
+		) const;
 
 		operator bool(
-		) const
-		{
-			return is_success();
-		}
+		) const;
 
 	protected:
 		exit_status(
 			int status
-		)
-		: exit_status_(status)
-		{
-		}
+		);
 
 		static constexpr const int success_ = EXIT_SUCCESS;
 		static constexpr const int failure_ = EXIT_FAILURE;
